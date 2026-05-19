@@ -1,0 +1,58 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Audit outputs (project-specific, do not commit)
+*_AUDIT_RESULTS.md
+*_audit_results.md
+audit-output/
+.review-ready-cache/
+
+# Local-only working files
+*.local.md
+*.private.md
+SUBMISSION.md
+NOTES.md
+TODO.md
+
+# Credentials / signing
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+*.cer
+GoogleService-Info.plist
+google-services.json
+service-account*.json
+
+# Build artifacts
+ios/build/
+android/build/
+android/app/build/
+*.ipa
+*.apk
+*.aab
+
+# Backup
+*.bak
+*.orig

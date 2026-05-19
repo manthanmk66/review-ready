@@ -1,0 +1,27 @@
+{
+  "name": "review-ready",
+  "version": "0.2.0",
+  "description": "Pre-submission auditor for iOS App Store and Google Play. Scans your app against Apple's Review Guidelines and Google Play's Developer Policy, flags rejection risks, and auto-fixes what it safely can.",
+  "author": {
+    "name": "Manthan Reddy"
+  },
+  "homepage": "https://github.com/manthanmk66/review-ready",
+  "repository": "https://github.com/manthanmk66/review-ready",
+  "license": "MIT",
+  "keywords": [
+    "app-store",
+    "play-store",
+    "ios",
+    "android",
+    "expo",
+    "react-native",
+    "compliance",
+    "audit",
+    "rejection",
+    "submission",
+    "review",
+    "apple-review-guidelines",
+    "google-play-policy",
+    "privacy-manifest"
+  ]
+}
