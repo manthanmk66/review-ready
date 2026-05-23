@@ -170,6 +170,56 @@ Grep Android code for `SharedPreferences` writes of keys matching: `token`, `pas
 
 **Severity:** HIGH if found (Google 4.2)
 
+### Check 9 — Forced login without justification (Apple 5.1.1(v))
+
+Apple's 5.1.1(v) reads: *"If your app doesn't include significant account-based features, let people use it without a login. Apps may not require users to enter personal information to function, except when directly relevant to the core functionality of the app or required by law."*
+
+**Detect forced-login pattern:**
+- Grep the entry route / root layout for auth gating (e.g., a `<Stack.Screen>` for login that redirects all routes when `user` is null)
+- Look for patterns like `if (!user) return <Redirect to="/login" />` at the app root
+- Look for `<AuthGate>`, `<RequireAuth>`, `<ProtectedRoute>` components wrapping the entire navigator
+- In React Navigation: a top-level `Stack.Navigator` with only login screens until auth succeeds
+
+**Then check whether the gating is justified:**
+- Does the app have features that genuinely require identity? (orders, payments, pickup, account-specific records, healthcare data)
+- OR is the app a content/browse experience that could work in guest mode? (catalog, news, weather, calculator)
+
+**Classify the app:**
+
+| App type | Forced login OK? |
+|----------|------------------|
+| Banking, food delivery, ride-share, healthcare, IoT control | ✅ Forced login accepted under 5.1.1(v) |
+| E-commerce with checkout/cart/orders | ✅ Forced login at checkout, but catalog browse should ideally be guest-accessible |
+| Social, messaging, dating | ✅ Forced login accepted |
+| Content (news, weather, calculator, utilities, reference) | ❌ Must offer guest mode |
+| Reader apps (Spotify-model: video/music/news) | ❌ Browse without account required; sign-in only at "save/sync" |
+
+**Severity:**
+- HIGH if app is content/utility type but forces login (Apple will reject under 5.1.1(v))
+- MEDIUM if transactional app forces login but has browsable catalog/feed that could be guest-accessible — Apple is inconsistent here, some reviewers ask for guest browse
+- INFO if app is clearly transactional (forced login is fine) — but ALWAYS flag the reminder that App Review Notes must include a justification
+
+**The fix when forced login is legitimately required:**
+
+In App Store Connect → App Information → **App Review Information → Notes**, paste a justification using this approved template:
+
+```
+Why Sign-In is Required
+
+<AppName> requires account creation before browsing because:
+
+- <Reason 1, e.g., Orders are tied to a verified phone number for pickup authentication>
+- <Reason 2, e.g., Customers receive a QR code linked to their account for order collection>
+- <Reason 3, e.g., Pickup point assignment and delivery slot booking require a verified user identity>
+- <Reason 4, e.g., Order history and payment records are account-specific>
+
+Guest browsing is not available as all core features (cart, checkout, order tracking, pickup QR) require an authenticated user.
+```
+
+This wording has been verified to pass Apple review for transactional apps (Q2 2026, food delivery / pickup category). Reviewers want the reasons enumerated, each tied to a real feature that needs identity.
+
+**Also remind the user:** if the app login uses phone OTP, the App Review Notes must ALSO include a demo phone number + OTP bypass (otherwise Apple 2.1 rejection — reviewers cannot log in).
+
 ## Output format
 
 Return a JSON object with this structure (and ONLY this — no prose around it):
