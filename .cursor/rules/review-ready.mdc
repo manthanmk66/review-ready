@@ -1,0 +1,40 @@
+---
+description: Review Ready — pre-submission compliance auditor for iOS App Store and Google Play. Auto-activates when working with mobile app config files. Use the /review-ready:scan, /review-ready:precheck, and /review-ready:fix commands to audit and fix store-rejection issues.
+globs:
+  - "**/app.json"
+  - "**/app.config.js"
+  - "**/app.config.ts"
+  - "**/Info.plist"
+  - "**/PrivacyInfo.xcprivacy"
+  - "**/AndroidManifest.xml"
+  - "**/eas.json"
+  - "**/build.gradle"
+  - "**/*.entitlements"
+alwaysApply: false
+---
+
+# Review Ready — Cursor Activation Rule
+
+When the user is editing or working with mobile app configuration files (iOS or Android), Review Ready's audit tools are available.
+
+## Available skills
+
+- `/review-ready:scan` — Full pre-submission audit. Spawns 5 parallel subagents to check privacy compliance, IAP enforcement, permissions, metadata, and crash risk. Outputs a severity-ranked report with file:line references.
+- `/review-ready:precheck` — Fast 30-second top-10 blocker check before submission.
+- `/review-ready:fix` — Auto-applies safe compliance fixes from the latest scan.
+
+## When to suggest these commands
+
+Suggest a scan when the user:
+- Mentions submitting to the App Store, Play Store, TestFlight, or EAS Build
+- Asks about App Store rejections, Apple guidelines, Google Play policies
+- Edits permission strings, privacy manifest, or app metadata
+- Asks "will my app get rejected" / "is my app ready" / "check my app"
+
+## Plugin location
+
+The plugin lives at this repository. Skills are in `skills/`, subagent prompts are in `agents/`, store rule knowledge bases are in `rules/`, and real-world rejection examples are in `rules/real-rejections.md`.
+
+## Hooks
+
+When the user edits `Info.plist`, `AndroidManifest.xml`, `app.json`, `PrivacyInfo.xcprivacy`, `eas.json`, or `*.entitlements`, the plugin's hook fires a contextual compliance reminder.

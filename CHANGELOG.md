@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0] - 2026-05-23
+
+### Added — Multi-tool support
+- **Cursor** plugin support: `.cursor-plugin/plugin.json` manifest + `.cursor/rules/review-ready.mdc` activator rule. Listed on the [Cursor Marketplace](https://cursor.com/marketplace) submission queue.
+- **Codex** plugin support: `AGENTS.md` for project-level instructions, `marketplace.json` for marketplace catalog, `.agents/skills/` directory with symlinks to the shared SKILL.md files. Discoverable via Codex CLI `/plugin marketplace add`.
+- Updated README with Claude Code + Cursor + Codex install instructions.
+
+### Architecture
+- Skills (`skills/`), agents (`agents/`), hooks (`hooks/`), and knowledge base (`rules/`) are shared across all three tools — single source of truth.
+- Tool-specific differences live in `.claude-plugin/`, `.cursor-plugin/`, `.cursor/`, `.agents/`, `AGENTS.md`, `marketplace.json`.
+
 ## [0.3.0] - 2026-05-19
 
 ### Added

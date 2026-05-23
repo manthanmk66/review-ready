@@ -2,7 +2,9 @@
 
 **Pre-submission compliance auditor for iOS App Store & Google Play.** Stop guessing what will get your app rejected — scan it first.
 
-[![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://claude.ai/plugins) ![Status](https://img.shields.io/badge/status-beta-orange) ![License](https://img.shields.io/badge/license-MIT-green)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://claude.ai/plugins) [![Cursor](https://img.shields.io/badge/Cursor-Plugin-black)](https://cursor.com/marketplace) [![Codex](https://img.shields.io/badge/Codex-Plugin-10a37f)](https://developers.openai.com/codex/plugins) ![Status](https://img.shields.io/badge/status-beta-orange) ![License](https://img.shields.io/badge/license-MIT-green)
+
+Works in **Claude Code**, **Cursor**, and **Codex** — one plugin, three tools.
 
 ---
 
@@ -27,15 +29,30 @@ Built for **Expo / React Native** projects first, with full **native iOS** and *
 
 ## Install
 
+### Claude Code
 ```bash
-# From Claude Code (once published to marketplace)
+# From marketplace (after approval)
 /plugin install review-ready
 
-# Or install locally for development
+# Or locally:
 git clone https://github.com/manthanmk66/review-ready ~/.claude/plugins/review-ready
 ```
+Restart Claude Code after install.
 
-Then restart Claude Code.
+### Cursor
+1. Open Cursor → Settings → Plugins → Add from GitHub
+2. Paste: `https://github.com/manthanmk66/review-ready`
+3. Or install directly from the [Cursor Marketplace](https://cursor.com/marketplace) (after approval)
+
+### Codex
+```bash
+# Inside Codex CLI
+/plugin marketplace add manthanmk66/review-ready
+/plugin install review-ready@review-ready-marketplace
+/reload-plugins
+```
+
+Or clone the repo into a project — Codex auto-reads the `AGENTS.md` file.
 
 ---
 

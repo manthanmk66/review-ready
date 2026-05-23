@@ -23,5 +23,14 @@
     "apple-review-guidelines",
     "google-play-policy",
     "privacy-manifest"
-  ]
+  ],
+  "skills": ["skills/scan", "skills/precheck", "skills/fix"],
+  "agents": [
+    "agents/privacy-auditor.md",
+    "agents/iap-business-auditor.md",
+    "agents/permissions-auditor.md",
+    "agents/metadata-auditor.md",
+    "agents/crash-risk-auditor.md"
+  ],
+  "hooks": "hooks/hooks.json"
 }
