@@ -95,6 +95,54 @@ If a third-party library or SDK *links* to a sensitive API (AVFoundation, Photos
 
 ---
 
+## Apple Guideline 5.1.1(v) — Forced Login (APPROVED with justification)
+
+**This is a positive example — what gets APPROVED, not rejected.**
+
+### Real approval (May 2026, food delivery / pickup app)
+
+The app forced account creation before any browsing was possible. No guest mode. The developer added the following note to App Store Connect → App Review Information → Notes, and the app was approved on first submission:
+
+```
+Why Sign-In is Required
+
+<AppName> requires account creation before browsing because:
+
+- Orders are tied to a verified phone number for pickup authentication
+- Customers receive a QR code linked to their account for order collection
+- Pickup point assignment and delivery slot booking require a verified user identity
+- Order history and payment records are account-specific
+
+Guest browsing is not available as all core features (cart, checkout, order tracking, pickup QR) require an authenticated user.
+```
+
+### Why this worked
+
+Apple's 5.1.1(v) reads: *"If your app doesn't include significant account-based features, let people use it without a login. Apps may not require users to enter personal information to function, **except when directly relevant to the core functionality of the app**..."*
+
+The note hits the exact phrasing Apple looks for:
+1. **Enumerated reasons** — each bullet ties forced login to a specific feature (QR pickup, payment, slot booking)
+2. **Identity-dependency** — each feature is genuinely impossible to deliver anonymously
+3. **Closing summary** — explicitly states why guest mode isn't viable
+
+### When this template will NOT work
+
+- Content apps (news, weather, calculator, utilities, reference) — Apple will still ask for guest mode
+- E-commerce where catalog browsing doesn't need identity — Apple may push back asking for guest browse, even with this note
+- Apps with "social" or "community" features that COULD be partially anonymous
+
+For those, you must add guest mode rather than rely on a justification note.
+
+### Pattern for the plugin
+
+When a forced-login pattern is detected, the auditor should:
+1. Classify the app type (transactional vs content)
+2. If transactional: remind the user to include this exact template in App Review Notes
+3. If content/utility: flag as HIGH risk and recommend guest mode
+4. Always remind: if login is OTP-based, include demo credentials with OTP bypass
+
+---
+
 ## Apple Guideline 2.1 — App Completeness (Demo Credentials)
 
 ### Common rejection pattern

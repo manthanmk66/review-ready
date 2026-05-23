@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0] - 2026-05-19
+
+### Added
+- New forced-login check (Apple 5.1.1(v)) in `privacy-auditor`. Detects auth-gated app entry, classifies the app as transactional vs content, and recommends the App Review Notes justification template for transactional apps.
+- New "approved with justification" reference in `rules/real-rejections.md` showing a verified-approved App Review Notes template for forced-login food delivery / pickup apps.
+- Plugin now reminds users that OTP-based forced login also requires demo credentials in App Review Notes to avoid Apple 2.1 rejection.
+
 ## [0.2.0] - 2026-05-19
 
 ### Added
