@@ -1,4 +1,7 @@
-# Review Ready
+<h1 align="left">
+  <img src="https://github.com/user-attachments/assets/8a830804-529a-4c0d-b901-8092bf82c3a4" alt="RR Logo" width="28" />
+   Review Ready
+</h1>
 
 **Pre-submission compliance auditor for iOS App Store & Google Play.** Stop guessing what will get your app rejected — scan it first.
 
