@@ -1,13 +1,13 @@
 {
   "$schema": "https://developers.openai.com/codex/schema/marketplace.json",
   "name": "review-ready-marketplace",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Review Ready — pre-submission auditor for iOS App Store and Google Play.",
   "owner": "manthanmk66",
   "plugins": [
     {
       "name": "review-ready",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "description": "Pre-submission auditor for iOS App Store and Google Play. Scans your app against Apple's Review Guidelines and Google Play's Developer Policy, flags rejection risks, and auto-fixes what it safely can.",
       "repository": "https://github.com/manthanmk66/review-ready",
       "homepage": "https://github.com/manthanmk66/review-ready",

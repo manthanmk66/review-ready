@@ -94,32 +94,40 @@ The plugin watches edits to these files and reminds you of compliance pitfalls i
 
 ## Example output
 
+Every scan produces **two views**: a rich summary in your terminal, and a
+colourful **Dashboard HTML report** that opens in your browser automatically.
+
+**1. In the terminal** — emoji-coded severity, a per-store summary table, and a
+severity gauge:
+
 ```
-# Review Ready — Audit Report
-Project: Acme
-Stack: Expo SDK 54 / React Native 0.81
-Apple Store: 2 blockers, 3 high, 4 medium
-Google Play: 0 blockers, 1 high, 2 medium
+# 🛡️ Review Ready — Audit Report
+Acme · Expo SDK 54 / React Native 0.81 · scanned 2026-06-14
 
-## 🛑 Blockers — Fix these before submitting
+> 🔴 NOT READY — 2 blockers must be fixed before submitting
 
-### 1. Missing NSCameraUsageDescription
-- Guideline: Apple 5.1.1 — Data Collection and Storage
-- Where: app.json:15
-- Issue: expo-camera is in dependencies but no camera permission string in ios.infoPlist.
-- Fix: Add to ios.infoPlist:
-  "NSCameraUsageDescription": "Acme uses your camera to scan QR codes for product authentication."
-- Auto-fix available: Yes — run /review-ready:fix
+| Store    | 🛑 Blockers | ⚠️ High | 📋 Medium | ✅ Passed |
+|----------|:----------:|:------:|:--------:|:--------:|
+| 🍎 Apple | 2          | 3      | 4        | 24       |
+| 🤖 Google| 0          | 1      | 2        | 28       |
 
-### 2. Encryption Export Compliance not declared
-- Guideline: Apple 5.4
-- Where: app.json (ios.config block missing)
-- Fix: Add "ios.config.usesNonExemptEncryption": false
-- Auto-fix available: Yes
+Severity mix  🛑🛑⚠️⚠️⚠️📋📋📋📋  → ████░░░░░░ 22% critical
 
-## ⚠️ High Risk — Likely to be rejected
+## 🛑 Blockers — fix these first
+1. Missing NSCameraUsageDescription   🔧 auto-fixable
+   📕 Apple 5.1.1 — Data Collection & Storage · 📍 app.json:15
+   ✅ Fix: add NSCameraUsageDescription to ios.infoPlist
 ...
 ```
+
+**2. In your browser** — a self-contained `review-ready-report.html` (Dashboard
+style): readiness badge, colour stat cards (Blockers / High / Medium / Passed),
+severity-coded issue cards with guideline refs and fixes, and a manual-steps
+checklist. It opens the instant the scan finishes, has zero external
+dependencies, and can be re-opened or shared anytime.
+
+> Tip: add `review-ready-report.html` to `.gitignore` if you don't want to
+> commit the report.
 
 ---
 

@@ -28,6 +28,13 @@ yarn-error.log*
 audit-output/
 .review-ready-cache/
 
+# Generated scan reports + temp findings (per-run, not source)
+review-ready-report.html
+.review-ready-findings.json
+
+# Brainstorming / visual-companion working files (local only)
+.superpowers/
+
 # Local-only working files
 *.local.md
 *.private.md

@@ -83,64 +83,103 @@ Severity definitions:
 - **LOW** — Best practice issue (e.g., missing privacy policy in-app link, console.log in production)
 - **INFO** — Awareness only (e.g., upcoming policy changes, manual steps reminder)
 
-## Step 3 — Produce the report
+## Step 3 — Produce the rich CLI report
 
-Output a markdown report with this exact structure:
+Print a colourful, scannable summary directly in the chat. The terminal renders
+GitHub-flavoured markdown, so use **emoji as severity colour**, a **summary
+table**, and a **block-char severity bar** — not plain headers. This is the
+instant view; the full visual report opens in the browser in Step 3.5.
+
+Use the same severity emoji everywhere so the CLI and HTML always agree:
+🛑 BLOCKER · ⚠️ HIGH · 📋 MEDIUM · 💡 LOW · ℹ️ INFO · ✅ Passed.
+
+Output this exact structure:
 
 ```markdown
-# Review Ready — Audit Report
-**Project:** <project name>
-**Stack:** <Expo SDK X / Native iOS / etc.>
-**Scanned:** <timestamp>
-**Apple Store:** <X blockers, Y high, Z medium>
-**Google Play:** <X blockers, Y high, Z medium>
+# 🛡️ Review Ready — Audit Report
+**<project name>** · <Expo SDK X / Native iOS / etc.> · scanned <timestamp>
 
-## 🛑 Blockers — Fix these before submitting
+> ### <🔴 NOT READY — N blockers must be fixed | 🟡 READY — WITH WARNINGS | 🟢 READY>
 
-### 1. [Title]
-- **Guideline:** Apple 5.1.1 — Data Collection and Storage
-- **Where:** `ios/MyApp/Info.plist:42`
-- **Issue:** [Full description]
-- **Fix:** [Specific code or config to change]
-- **Auto-fix available:** Yes — run `/review-ready:fix 1`
+| Store | 🛑 Blockers | ⚠️ High | 📋 Medium | ✅ Passed |
+|-------|:----------:|:------:|:--------:|:--------:|
+| 🍎 Apple | **N** | N | N | N |
+| 🤖 Google | N | N | N | N |
 
-### 2. ...
+**Severity mix**  `<emoji run, e.g. 🛑🛑⚠️⚠️📋>`  → `████░░░░░░ NN% critical`
 
-## ⚠️ High Risk — Likely to be rejected
+## 🛑 Blockers — fix these first
 
-### 1. ...
+**1. [Title]** &nbsp;`🔧 auto-fixable`   ← omit pill if not auto-fixable
+- 📕 Apple 5.1.1 — Data Collection & Storage
+- 📍 `app.json:15`
+- [Full description]
+- ✅ **Fix:** [Specific code or config to change]
 
-## 📋 Medium Risk — Often flagged in review
+**2. ...**
 
-### 1. ...
+## ⚠️ High Risk
+- **[Title]** — 📕 <guideline> · `file:line` · [one-line summary]
 
-## 💡 Low Risk + Info
+## 📋 Medium Risk
+- ...
 
-- [...]
+## 💡 Low + ℹ️ Info
+- ...
 
-## ✅ Passed checks
-- [List of what was verified to be compliant]
-
-## 📝 Manual steps reminder (cannot be auto-checked)
-**App Store Connect:**
-- [ ] Privacy Nutrition Labels filled
-- [ ] Demo account credentials provided
-- [ ] Age rating questionnaire completed
-- [ ] Encryption Export Compliance answered
-
-**Play Console:**
-- [ ] Data Safety form completed
-- [ ] Account deletion URL set
-- [ ] Privacy policy URL set
-- [ ] Required declarations submitted (FGS, sensitive permissions, etc.)
-
-## 🚀 Next steps
-1. Fix all BLOCKER and HIGH items (estimated time: X minutes)
-2. Run `/review-ready:fix --safe` to auto-apply safe fixes
-3. Re-run `/review-ready:scan` to verify
-4. Complete manual steps in App Store Connect / Play Console
-5. Submit with confidence
+## ✅ Passed (N)
+`✓ PrivacyInfo.xcprivacy present` &nbsp; `✓ Target SDK 35` &nbsp; …
 ```
+
+Build the `████░░░░` bar from the share of BLOCKER+HIGH issues out of all issues
+(round to nearest 10%). Keep BLOCKER and HIGH issues fully expanded; MEDIUM/LOW/
+INFO can be one-liners.
+
+## Step 3.5 — Open the colourful HTML report
+
+Generate a self-contained **Dashboard** HTML report and open it in the user's
+browser instantly. The plugin ships a zero-dependency Node generator at
+`${CLAUDE_PLUGIN_ROOT}/scripts/render-report.js`.
+
+1. Write the aggregated findings to a temp JSON file using the generator's
+   schema (see top of `render-report.js`):
+
+   ```json
+   {
+     "project": "<name>",
+     "stack": "<stack>",
+     "scannedAt": "<ISO timestamp>",
+     "issues": [ { "severity", "store", "guideline", "file", "line",
+                   "title", "description", "fix", "auto_fixable" } ],
+     "passed": [ "<verified check>", ... ]
+   }
+   ```
+
+   Save it to a temp path, e.g. `<project root>/.review-ready-findings.json`.
+
+2. Run the generator, passing the findings file and the project root as the
+   output dir. It writes `review-ready-report.html` and prints its path:
+
+   ```bash
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/render-report.js" "<project root>/.review-ready-findings.json" "<project root>"
+   ```
+
+3. Open the printed HTML path in the default browser, trying in order until one
+   succeeds, then clean up the temp JSON:
+
+   ```bash
+   open "<path>" 2>/dev/null || xdg-open "<path>" 2>/dev/null || start "" "<path>" 2>/dev/null || echo "Open this report in your browser: <path>"
+   rm -f "<project root>/.review-ready-findings.json"
+   ```
+
+   - `open` → macOS · `xdg-open` → Linux · `start` → Windows. If all fail, the
+     printed path is the fallback (the file is fully self-contained, so the user
+     can open it manually anytime).
+
+4. Confirm in chat: tell the user the colourful report just opened in their
+   browser and that `review-ready-report.html` was saved to the project root
+   (mention they can re-open it anytime). Suggest adding it to `.gitignore` if
+   they don't want to commit it.
 
 ## Step 4 — Offer auto-fix
 

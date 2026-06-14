@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0] - 2026-06-14
+
+### Added
+- **Colourful scan reports.** Every `/review-ready:scan` now produces two views:
+  - A rich **terminal report** — emoji-coded severity, a per-store summary table, and a `████░░░░` severity gauge.
+  - A self-contained **Dashboard HTML report** (`review-ready-report.html`) that opens in the browser automatically the moment a scan finishes — readiness badge, colour stat cards (Blockers / High / Medium / Passed), severity-coded issue cards with guideline refs and fixes, and a manual-steps checklist.
+- `scripts/render-report.js` — zero-dependency Node generator that turns aggregated findings JSON into the HTML report. All CSS inlined, so the report opens offline and can be re-opened or shared anytime. HTML-escapes all content.
+
+### Changed
+- `skills/scan/SKILL.md` — Step 3 rewritten as the rich CLI report; new Step 3.5 generates and opens the HTML report (`open` / `xdg-open` / `start` with a printed-path fallback). Shared via symlink with the Cursor/Codex `.agents/skills/` tree.
+
 ## [0.4.0] - 2026-05-23
 
 ### Added — Multi-tool support
