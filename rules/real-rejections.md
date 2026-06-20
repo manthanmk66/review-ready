@@ -202,6 +202,27 @@ Disclose this in App Review Notes — DO NOT hide it. Apple is fine with it.
 
 ---
 
+## Google Play — Invalid Use of Photo & Video Permissions (READ_MEDIA_IMAGES)
+
+### Real Play Console pre-review block (June 2026, biodata creator app)
+> "We found some common issues that are preventing your app from being sent for review. You must address these issues before you can send your changes for review.
+> **Invalid use of the photo and video permissions**
+> Your app cannot make use of the READ_MEDIA_IMAGES or READ_MEDIA_VIDEO permissions because it only needs one-time or infrequent access to a device's media files. To use these permissions, your app's core functionality must need persistent access to photo and video files.
+> Apps with one-time or infrequent use of photos cannot include the READ_MEDIA_IMAGES and READ_MEDIA_VIDEO permissions in their app manifest, and must migrate to a system photo picker instead."
+> Evidence: Photo and video permissions — Version codes: 5, 4
+
+**Failing pattern:** App declared `READ_MEDIA_IMAGES` + `READ_MEDIA_VISUAL_USER_SELECTED` in `AndroidManifest.xml` but only called `ImagePicker.launchImageLibraryAsync` once to pick a profile photo (one-off selection) and `MediaLibrary.saveToLibraryAsync` to save an export. Expo's `expo-media-library` / `expo-image-picker` auto-injected `READ_MEDIA_IMAGES` during prebuild.
+
+**Why it's a BLOCKER, not HIGH:** This is an automated **pre-review block** — Google refuses to even send the build for review. It is not a discretionary reviewer flag; it stops the release 100% of the time for the one-off-access pattern. The earlier guidance that rated this HIGH/"needs Declaration" was wrong for this case.
+
+**Fix (verified):**
+1. Remove `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`, `READ_MEDIA_VISUAL_USER_SELECTED` from the manifest on **all tracks** (`tools:node="remove"`), and in Expo add them to `android.blockedPermissions` in `app.json` so prebuild can't re-add them.
+2. Keep `launchImageLibraryAsync` — it uses the system Photo Picker on Android 13+ and needs no permission.
+3. Change gallery save to `MediaLibrary.requestPermissionsAsync(true)` (write-only) so the read permission is never requested; `saveToLibraryAsync` works via MediaStore on Android 10+.
+4. Bump `versionCode` and upload a new build — the block clears only with a new artifact.
+
+---
+
 ## Lessons for the plugin
 
 1. **Don't trust permission strings just because they exist** — Apple's 5.1.1(ii) bar is much higher than developers think.
@@ -209,5 +230,6 @@ Disclose this in App Review Notes — DO NOT hide it. Apple is fine with it.
 3. **Static-linked APIs trigger purpose-string requirements** — `expo-camera` unused still needs `NSCameraUsageDescription`.
 4. **Multi-app developer accounts get cross-referenced** — Apple sees your sibling apps in the same account and flags 3.2 if any look B2B.
 5. **App Review credentials are critical** — phone-OTP apps without reviewer bypass = guaranteed 2.1 rejection.
+6. **`READ_MEDIA_IMAGES` on a one-off-picker app is a Play BLOCKER, not a HIGH** — if the only media use is a single `launchImageLibraryAsync` / `PickVisualMedia` call, Google's automated pre-review blocks the release outright. Auditors must use the usage heuristic (one-off picker → BLOCKER + remove; in-app gallery/editor → HIGH + Declaration). Watch for Expo auto-injecting it via `expo-media-library`/`expo-image-picker`.
 
 This file should be updated whenever a real rejection is observed in production. Add the rejection email verbatim, the failing code/config pattern, and the fix.

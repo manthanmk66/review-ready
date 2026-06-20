@@ -44,7 +44,7 @@ Spawn these subagents simultaneously using the Agent tool. Each gets a focused s
 |-------|-------|--------|
 | `privacy-auditor` | Privacy compliance | ATT, PrivacyInfo.xcprivacy, permission usage strings, Data Safety form alignment, privacy policy URL, account deletion |
 | `iap-business-auditor` | Monetization | Apple IAP 3.1.1 enforcement, Stripe-for-digital-goods detection, subscription disclosure, external payment links, Play Billing |
-| `permissions-auditor` | Permissions & APIs | iOS permission strings present for every used capability, Android restricted permissions (SMS, MANAGE_EXTERNAL_STORAGE, etc.), foreground service types, sensitive APIs |
+| `permissions-auditor` | Permissions & APIs | iOS permission strings present for every used capability, Android restricted permissions (SMS, MANAGE_EXTERNAL_STORAGE, etc.), **`READ_MEDIA_IMAGES`/`READ_MEDIA_VIDEO` vs. one-off Photo Picker usage → BLOCKER when over-declared (§8.4)**, foreground service types, sensitive APIs |
 | `metadata-auditor` | Store listing & app config | Bundle IDs, version numbers, app name length, icon spec, encryption export compliance, Sign in with Apple, target SDK, adaptive icon |
 | `crash-risk-auditor` | Stability & quality | Force unwraps, unhandled promises, missing error boundaries, webview-only apps, minimum functionality, common crash patterns |
 
@@ -77,7 +77,7 @@ Each subagent returns a JSON list of issues:
 ```
 
 Severity definitions:
-- **BLOCKER** — Will cause rejection 100% of the time (e.g., missing usage string for used permission, IAP bypass, missing PrivacyInfo.xcprivacy)
+- **BLOCKER** — Will cause rejection 100% of the time (e.g., missing usage string for used permission, IAP bypass, missing PrivacyInfo.xcprivacy, **`READ_MEDIA_IMAGES`/`READ_MEDIA_VIDEO` declared on an app that only does one-off/infrequent photo access** — Google's automated pre-review blocks the release, see `rules/android-guidelines.md` §8.4 and `rules/real-rejections.md`)
 - **HIGH** — Causes rejection in most cases (e.g., generic permission string, missing Sign in with Apple, Data Safety mismatch)
 - **MEDIUM** — Frequent reviewer flag (e.g., over-declared permissions, missing account deletion)
 - **LOW** — Best practice issue (e.g., missing privacy policy in-app link, console.log in production)

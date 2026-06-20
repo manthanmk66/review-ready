@@ -411,14 +411,23 @@ Covered under [Section 1](#1-restricted-content).
 
 ### 8.4 Photo & Video Permissions (Android 13+)
 **Permissions:** `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`, `READ_MEDIA_VISUAL_USER_SELECTED`
-**Rule:** Apps targeting Android 13+ may only request `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO` if the system **Photo Picker** cannot meet the app's core functionality. Apps that still request these must submit the Photo and Video Permissions Declaration. For occasional photo selection, use the Photo Picker (`ACTION_PICK_IMAGES` / `PickVisualMedia` contract).
+**Rule:** Apps targeting Android 13+ may only request `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO` if the app's **core functionality requires persistent/broad access** to the user's photo & video library. Apps with **one-time or infrequent** access (e.g. picking a single profile photo, attaching an image to a message) **must NOT declare these permissions** and must use the system **Photo Picker** (`ACTION_PICK_IMAGES` / `PickVisualMedia` contract), which needs no permission. Apps with a genuine core need that still declare them must submit the Photo and Video Permissions Declaration in Play Console.
+
+**Severity guidance (IMPORTANT — this is a hard Play pre-review block, not a soft flag):**
+- **BLOCKER** when the manifest declares `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO` but the app only does **one-off / infrequent** image access (single picker call, profile photo, attach-and-go). Google's automated pre-review **stops the release from being sent for review** with: *"Invalid use of the photo and video permissions."* The developer cannot ship until the permission is removed (or migrated to the Photo Picker). Do NOT rate this HIGH — it blocks 100% of submissions in this pattern.
+- **HIGH** when the app has plausibly persistent/broad media access (gallery browser, photo editor enumerating the library) — it can ship but **only after** filing the Photo & Video Permissions Declaration; missing declaration = rejection.
+
 **Auto-checkable:** Yes
 **What to check:**
-- Manifest declares `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO`.
-- Code uses `ActivityResultContracts.PickVisualMedia` (good) vs. `MediaStore.Images.Media` cursor enumeration (likely needs declaration).
+- Manifest declares `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO` (or `READ_MEDIA_VISUAL_USER_SELECTED`).
+- **Usage heuristic that decides BLOCKER vs HIGH:** does code call `ImagePicker.launchImageLibraryAsync` / `ActivityResultContracts.PickVisualMedia` for one-off selection (→ Photo Picker, permission NOT needed → **BLOCKER** if still declared), vs. `MediaStore.Images.Media` cursor enumeration / a full in-app gallery (→ may justify the permission → **HIGH**, needs Declaration)?
+- Expo apps: `READ_MEDIA_IMAGES` is auto-injected by `expo-media-library` / `expo-image-picker`. Saving to the gallery (`saveToLibraryAsync`) uses MediaStore and does **not** need the read permission on Android 10+; `requestPermissionsAsync(true)` (write-only) avoids requesting it.
 - `compileSdk` / `targetSdk` ≥ 33.
-**Common rejection example:** Chat app requests `READ_MEDIA_IMAGES` to attach photos when Photo Picker would suffice.
-**Fix:** Use Android Photo Picker; remove `READ_MEDIA_IMAGES` if possible.
+**Common rejection example:** Profile/biodata/chat app declares `READ_MEDIA_IMAGES` for a single `launchImageLibraryAsync` call → Play pre-review blocks it; Photo Picker would suffice. (See `real-rejections.md`.)
+**Fix:**
+- Remove `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO` / `READ_MEDIA_VISUAL_USER_SELECTED` from **all** tracks. In bare/prebuilt Android, mark them `tools:node="remove"`; in Expo, add them to `android.blockedPermissions` in `app.json` so prebuild can't re-inject them.
+- Keep using the system Photo Picker for selection; for gallery save use `requestPermissionsAsync(true)` (write-only).
+- Only if core functionality genuinely needs broad access: keep the permission and file the Photo & Video Permissions Declaration.
 
 ### 8.5 Accessibility Service – `BIND_ACCESSIBILITY_SERVICE`
 **Rule:** Accessibility APIs are restricted to apps that help users with disabilities or whose core functionality genuinely requires the service. Must not be used to track user actions for non-accessibility purposes, capture passwords, automate billing, or interfere with other apps without consent. Prominent disclosure required.

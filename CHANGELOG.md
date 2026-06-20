@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0] - 2026-06-20
+
+### Fixed — Photo & Video permissions severity
+- **`READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO` on one-off / infrequent photo access is now a Play BLOCKER** (was previously HIGH / "needs Declaration"). Google's automated pre-review **blocks the release from being sent for review** in this pattern, so it must be a blocker. Auditors now use a usage heuristic: single `launchImageLibraryAsync` / `PickVisualMedia` picker call → BLOCKER + remove the permission; full in-app gallery / photo editor → HIGH + file the Photo & Video Permissions Declaration.
+- `rules/android-guidelines.md` §8.4 rewritten with the BLOCKER-vs-HIGH severity rule, the Expo auto-injection caveat (`expo-media-library` / `expo-image-picker`), and the exact removal fix (`tools:node="remove"` + `android.blockedPermissions`, `requestPermissionsAsync(true)` for write-only gallery save).
+- Added verbatim June 2026 Play Console pre-review block to `rules/real-rejections.md` with the failing pattern and verified fix.
+- `scan` skill: BLOCKER severity definition and `permissions-auditor` scope updated to flag this case.
+
 ## [0.5.0] - 2026-06-14
 
 ### Added
