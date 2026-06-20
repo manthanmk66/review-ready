@@ -1,5 +1,15 @@
 # Changelog
 
+## [cli-0.1.0] - 2026-06-20
+
+### Added — Standalone deterministic CLI (`review-ready-cli` on npm)
+- New `packages/cli` — a zero-dependency, no-LLM scanner that runs the same compliance knowledge as deterministic static checks. `npx review-ready-cli` works locally or in CI with no API key; the installed command is `review-ready`.
+- **Two auditors ported from the plugin's agent prompts:** `permissions` (Android §8.4 photo/video BLOCKER, iOS usage strings, restricted permissions, over-declared storage, foreground service types) and `metadata` (bundle IDs, encryption export flag, Sign in with Apple 4.8, target SDK, app name, version/build, ATS, Apple 3.2 business-app signal).
+- **PR mode** — `--base <git-ref>` scans the base ref in a throwaway `git worktree` and reports only newly-introduced issues (line-independent fingerprint), so pre-existing issues don't fail every build. `--diff <file.json>` compares against a saved scan.
+- **0–100 readiness score**, severity-ranked terminal report, and an optional self-contained HTML dashboard (`--html`). Exit code 1 on blockers gates CI.
+- **GitHub Action** (`action.yml`) + example workflow: auto-derives the PR base branch, fails only on new blockers, uploads the HTML report as an artifact.
+- 23 tests (`node:test`, zero deps). Judgment-based checks (content rules, icon pixels, ambiguous auth, crash-risk) remain in the plugin by design.
+
 ## [0.6.0] - 2026-06-20
 
 ### Fixed — Photo & Video permissions severity

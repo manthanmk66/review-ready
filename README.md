@@ -9,6 +9,8 @@
 
 Works in **Claude Code**, **Cursor**, and **Codex** — one plugin, three tools.
 
+> ⚡ **Prefer a zero-config CLI?** `npx review-ready-cli` runs the deterministic checks with **no API key, no LLM** — locally or in CI (exits non-zero on blockers). It complements the AI plugin: the CLI catches mechanical rejection causes, the plugin adds judgment-based checks. See **[packages/cli](packages/cli)**.
+
 ---
 
 ## What it does
