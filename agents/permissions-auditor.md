@@ -65,6 +65,7 @@ For each detected restricted permission, output an INFO/HIGH item reminding the 
 | Permission detected | Declaration form |
 |---------------------|------------------|
 | `READ_SMS` / `SEND_SMS` etc. | SMS/Call Log Permissions Declaration |
+| `READ_CALL_LOG` used for missed-call / flash-call phone verification | **Not allowed since Jul 15, 2026 → BLOCKER.** Remove; use SMS Retriever API or the Digital Credentials API |
 | `MANAGE_EXTERNAL_STORAGE` | All Files Access Declaration |
 | `ACCESS_BACKGROUND_LOCATION` | Location Permissions Declaration |
 | `READ_MEDIA_IMAGES` (without Photo Picker) | Photo and Video Permissions Declaration |

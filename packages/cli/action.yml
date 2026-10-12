@@ -1,0 +1,60 @@
+name: "Review Ready"
+description: "Deterministic App Store / Play compliance scan. Gate PRs on newly-introduced rejection risks."
+author: "Manthan Reddy"
+branding:
+  icon: "shield"
+  color: "purple"
+
+inputs:
+  directory:
+    description: "Project directory to scan."
+    required: false
+    default: "."
+  base-ref:
+    description: "Git ref to diff against (only new issues fail the build). Defaults to the PR base branch."
+    required: false
+    default: ""
+  fail-on-blocker:
+    description: "Fail the job when a blocker is found (set 'false' to report only)."
+    required: false
+    default: "true"
+  html:
+    description: "Write review-ready-report.html and upload it as an artifact."
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run Review Ready
+      shell: bash
+      run: |
+        set -e
+        BASE="${{ inputs.base-ref }}"
+        if [ -z "$BASE" ] && [ -n "${{ github.base_ref }}" ]; then
+          BASE="origin/${{ github.base_ref }}"
+        fi
+
+        ARGS=()
+        if [ -n "$BASE" ]; then ARGS+=(--base "$BASE"); fi
+        if [ "${{ inputs.html }}" = "true" ]; then ARGS+=(--html); fi
+
+        echo "::group::review-ready ${ARGS[*]}"
+        set +e
+        npx --yes review-ready-cli@latest "${{ inputs.directory }}" "${ARGS[@]}"
+        CODE=$?
+        set -e
+        echo "::endgroup::"
+
+        if [ "$CODE" -ne 0 ] && [ "${{ inputs.fail-on-blocker }}" = "true" ]; then
+          echo "::error::Review Ready found blocker(s) — see the report above."
+          exit "$CODE"
+        fi
+
+    - name: Upload HTML report
+      if: ${{ inputs.html == 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: review-ready-report
+        path: ${{ inputs.directory }}/review-ready-report.html
+        if-no-files-found: ignore

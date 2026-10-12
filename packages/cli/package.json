@@ -1,0 +1,42 @@
+{
+  "name": "review-ready-cli",
+  "version": "0.2.0",
+  "description": "Deterministic pre-submission compliance scanner for iOS App Store & Google Play. No API key, runs in CI.",
+  "bin": {
+    "review-ready": "bin/review-ready.js"
+  },
+  "type": "commonjs",
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "test": "node --test test/",
+    "scan": "node bin/review-ready.js",
+    "prepublishOnly": "npm test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "app-store",
+    "play-store",
+    "ios",
+    "android",
+    "expo",
+    "react-native",
+    "compliance",
+    "audit",
+    "ci",
+    "rejection",
+    "submission"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/manthanmk66/review-ready.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/manthanmk66/review-ready",
+  "license": "MIT",
+  "author": "Manthan Reddy"
+}

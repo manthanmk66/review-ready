@@ -1,0 +1,25 @@
+# Example: gate pull requests on newly-introduced App Store / Play rejection risks.
+# Copy this to .github/workflows/review-ready.yml in your app repo.
+
+name: Review Ready
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed so --base can diff against the base branch
+
+      # Option A — use the published action (recommended):
+      - uses: manthanmk66/review-ready/packages/cli@main
+        with:
+          directory: "."
+          # base-ref defaults to the PR base branch; only NEW blockers fail the build.
+
+      # Option B — run the CLI directly:
+      # - run: npx --yes review-ready-cli@latest . --base origin/${{ github.base_ref }} --html

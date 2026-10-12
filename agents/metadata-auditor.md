@@ -16,7 +16,7 @@ You audit **app metadata and configuration** — the stuff that gets caught at u
 4. **App icon spec** — 1024×1024 RGB PNG no alpha (iOS); 512×512 PNG no transparency (Play); adaptive icon (Android)
 5. **Encryption Export Compliance** — `ITSAppUsesNonExemptEncryption` answer
 6. **Sign in with Apple** (Apple 4.8) — required if third-party login or proprietary account
-7. **Target SDK level** — Android 15 / API 35 (as of Aug 2025), iOS 15+ deployment
+7. **Target SDK level** — Android 16 / API 36 (since Aug 31, 2026); iOS built with Xcode 26 / iOS 26 SDK (since Apr 28, 2026)
 8. **64-bit & 16 KB page support** (Android)
 9. **Adaptive icon** (Android)
 10. **Universal Links / Associated Domains** — proper config if deep links present
@@ -130,25 +130,29 @@ If ANY of the above are detected, verify `expo-apple-authentication` (or `@inver
 
 ### Check 7 — Target SDK (Android)
 Detect Expo SDK version from `package.json > dependencies > expo`:
-- Expo SDK 51+ → targets API 34
-- Expo SDK 52+ → targets API 35 (Android 15)
+- Expo SDK 51–52 → targets API 34 (SDK 52 compiles against 35 but targets 34)
+- Expo SDK 53 → targets API 35
+- Expo SDK 54+ → targets API 36 (Android 16)
 
-OR check `android/app/build.gradle` for `targetSdkVersion`. Must be ≥ 35 as of Aug 2025 Play requirement.
+OR check `android/app/build.gradle` for `targetSdkVersion` (wins over everything else).
 
-OR check `expo-build-properties` plugin in `app.json > plugins`.
+OR check `expo-build-properties` plugin in `app.json > plugins` (overrides the Expo default).
 
-**Severity:** BLOCKER if targetSdk < 35 for new/updated apps post Aug 2025
+Must be ≥ 36 for new apps and updates since Aug 31, 2026 (Wear OS / Automotive ≥ 35, TV / XR ≥ 34). Extensions to Nov 1, 2026 were available on request, so a project at 35 may still upload until then if the developer got one.
 
-### Check 8 — iOS deployment target
-Check `ios.deploymentTarget` in `expo-build-properties` plugin or `IPHONEOS_DEPLOYMENT_TARGET` in pbxproj. Must support Apple's current minimum (typically iOS 15.1+ for current Xcode).
+**Severity:** BLOCKER if the target is read from build.gradle or expo-build-properties and is < 36; HIGH if inferred from the Expo SDK only.
 
-**Severity:** MEDIUM if too low (Xcode may not allow upload)
+### Check 8 — iOS build SDK & deployment target
+- **Build SDK:** since Apr 28, 2026, App Store Connect rejects uploads not built with Xcode 26 / iOS 26 SDK. Expo SDK 54+ uses an Xcode 26 EAS image by default; for SDK ≤ 53 check `eas.json > build.production.ios.image` (needs an Xcode 26 image or `"latest"`). Bare projects: check CI config for a pinned Xcode < 26.
+- **Deployment target:** `ios.deploymentTarget` in `expo-build-properties` or `IPHONEOS_DEPLOYMENT_TARGET` in pbxproj. Apple's floor is iOS 13 (since Sep 9, 2026); React Native 0.76+ already requires 15.1.
+
+**Severity:** HIGH if Expo SDK ≤ 53 with no Xcode 26 image (upload fails before review); MEDIUM if deployment target < 13.
 
 ### Check 9 — 64-bit & 16 KB page support (Android)
 - `abiFilters` should include `arm64-v8a` (and ideally `x86_64`)
-- All native `.so` libraries must support 16 KB pages (effective May 2026 for updates)
+- All native `.so` libraries must support 16 KB pages (enforced for updates since May 1, 2026)
 
-**Severity:** BLOCKER for 64-bit missing; HIGH for 16 KB after May 2026
+**Severity:** BLOCKER for 64-bit missing; BLOCKER for confirmed non-16 KB-aligned `.so`, HIGH when only suspected (old NDK / AGP < 8.5.1)
 
 ### Check 10 — Universal Links / Associated Domains
 If app uses deep links (detect: `expo-linking`, `Linking.openURL`, `react-navigation` deep link config):
@@ -214,6 +218,11 @@ Detect signals that the app is business-only:
 
 **Apple's rejection wording for reference:**
 > "We found in our review that the app is intended to be used by a specific business or organization, including partners, clients, or employees, but you've selected public distribution on the App Store..."
+
+### Check 16 — Apple 4.3(b) saturated categories (Jun 8, 2026 rewrite)
+If the app name, description, or primary feature puts it in a category Apple now names as "well established" — **dating, flashlight, sound effects / soundboard, wallpaper, simple timer, fortune telling** (horoscope, tarot) — Apple won't accept new submissions "unless they offer a meaningfully different or improved experience", and may remove existing ones that aren't updated or don't attract customers. Drinking games, Kama Sutra, fart and burp apps are called low-effort outright.
+
+**Severity:** HIGH for a new submission in a named category (state the differentiator in App Review Notes and the first screenshot); INFO for an existing live app (keep it updated). Also flag several apps built from one template with near-identical bundle IDs under 4.3(a).
 
 ## Output format
 

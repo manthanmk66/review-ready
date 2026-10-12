@@ -165,6 +165,12 @@ Use this alongside `ios-guidelines.md` and `android-guidelines.md` — those def
 **Fail:** App Store Connect rejection at upload.
 **Fix:** Export square 1024×1024 RGB PNG.
 
+### B.0 Build toolchain (App Store Connect upload gate)
+**Check:** Since Apr 28, 2026, uploads must be built with Xcode 26+ and the iOS 26 SDK. Since Sep 9, 2026, the iOS deployment target must be 13.0 or later.
+**Detect:** Expo SDK ≤ 53 with no `build.<profile>.ios.image` in `eas.json` pointing at an Xcode 26 image (or `"latest"`). Bare: CI Xcode pinned below 26.
+**Fail:** Binary rejected at upload / validation, before review.
+**Fix:** Upgrade to Expo SDK 54+ (Xcode 26 image by default) or set `"ios": { "image": "latest" }` in the production profile.
+
 ### B.10 Splash screen
 **Check:** `expo-splash-screen` configured; doesn't contain ads, promotional text, or copyright violations.
 **Fail:** Apple 4.0 design.
@@ -174,10 +180,10 @@ Use this alongside `ios-guidelines.md` and `android-guidelines.md` — those def
 ## SECTION C — Android (`app.json > android.*` + `AndroidManifest.xml`)
 
 ### C.1 Target SDK
-**Check:** EAS Build uses Expo SDK ≥ 50, which targets API 34+. As of 2025-08, Play requires API 35 (Android 15) for new apps and updates.
-**Detect:** `expo-build-properties` plugin with `android.targetSdkVersion` < 35.
+**Check:** Since Aug 31, 2026, Play requires API 36 (Android 16) for new apps and updates (extension to Nov 1, 2026 on request). Default targets: Expo SDK 52 → API 34 (it compiles against 35 but targets 34), SDK 53 → API 35, SDK 54+ → API 36.
+**Detect:** Expo SDK ≤ 53 without an override, or `expo-build-properties` `android.targetSdkVersion` < 36, or `targetSdkVersion` < 36 in `android/app/build.gradle`.
 **Fail:** Play Console rejection at upload.
-**Fix:** Upgrade Expo SDK or set `targetSdkVersion: 35` via `expo-build-properties`.
+**Fix:** Upgrade to Expo SDK 54+ (preferred), or set `targetSdkVersion: 36` and `compileSdkVersion: 36` via `expo-build-properties` and test edge-to-edge and predictive back, since API 36 removes the edge-to-edge opt-out.
 
 ### C.2 Permissions
 **Check:** `android.permissions` array in `app.json` — must list only permissions actually used.
@@ -194,7 +200,7 @@ Use this alongside `ios-guidelines.md` and `android-guidelines.md` — those def
 | Permission | Declaration required |
 |------------|----------------------|
 | `READ_SMS`, `SEND_SMS`, `RECEIVE_SMS` | SMS/Call Log Declaration |
-| `READ_CALL_LOG`, `WRITE_CALL_LOG` | SMS/Call Log Declaration |
+| `READ_CALL_LOG`, `WRITE_CALL_LOG` | SMS/Call Log Declaration (phone-call verification no longer allowed, Jul 2026) |
 | `MANAGE_EXTERNAL_STORAGE` | All Files Access Declaration |
 | `ACCESS_BACKGROUND_LOCATION` | Location Declaration |
 | `READ_MEDIA_IMAGES` + `READ_MEDIA_VIDEO` (when Photo Picker insufficient) | Photo and Video Permissions Declaration |
@@ -238,9 +244,9 @@ Use this alongside `ios-guidelines.md` and `android-guidelines.md` — those def
 **Check:** EAS Build defaults include 64-bit ABIs (`arm64-v8a`). If native modules ship only 32-bit, fail.
 **Fix:** Use Expo's prebuilt modules; verify with `apkanalyzer` if custom.
 
-### C.9 16 KB page size (May 2026)
+### C.9 16 KB page size
 **Check:** All native libraries support 16 KB pages (Expo SDK 51+ targets this).
-**Fail:** Play Console rejection after May 1, 2026.
+**Fail:** Play Console blocks updates without 16 KB support (enforced since May 1, 2026).
 **Fix:** Upgrade Expo SDK; rebuild native modules with NDK r27+.
 
 ### C.10 Cleartext traffic
@@ -337,7 +343,7 @@ These are NOT auto-checkable from the codebase but the plugin should remind the 
 
 **iOS / App Store Connect:**
 - [ ] Privacy "Nutrition Labels" filled accurately
-- [ ] Age rating questionnaire matches content
+- [ ] Age rating questionnaire matches content (new 13+/16+/18+ questionnaire, required since Jan 31, 2026)
 - [ ] Demo account credentials provided for review (if login required)
 - [ ] Screenshots show actual app, no placeholder text
 - [ ] Encryption Export Compliance (ITSAppUsesNonExemptEncryption answered)
@@ -352,6 +358,7 @@ These are NOT auto-checkable from the codebase but the plugin should remind the 
 - [ ] App access (demo credentials for reviewer)
 - [ ] News, Health, Financial, Gambling, Families declarations as applicable
 - [ ] Foreground Service Type declarations with demo video
+- [ ] Developer verification done and app registered in Play Console (Jul 2026; unregistered apps risk removal)
 
 ---
 

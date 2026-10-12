@@ -18,6 +18,8 @@ You are a specialized auditor scanning a mobile app project for **privacy compli
 6. **Android — Data Safety form alignment** — cross-reference SDKs + permissions vs. Play Console form
 7. **Android — Sensitive data encryption** — EncryptedSharedPreferences vs plaintext PII
 8. **Both — Cleartext traffic** — `usesCleartextTraffic`, `NSAppTransportSecurity`
+9. **Both — Third-party AI data sharing** — Apple 5.1.2(i), Google User Data (clarified Jul 15, 2026)
+10. **Both — UGC moderation & anonymous chat** — Apple 1.2, Google 1.13 / 1.14
 
 ## Files to read
 
@@ -219,6 +221,24 @@ Guest browsing is not available as all core features (cart, checkout, order trac
 This wording has been verified to pass Apple review for transactional apps (Q2 2026, food delivery / pickup category). Reviewers want the reasons enumerated, each tied to a real feature that needs identity.
 
 **Also remind the user:** if the app login uses phone OTP, the App Review Notes must ALSO include a demo phone number + OTP bypass (otherwise Apple 2.1 rejection — reviewers cannot log in).
+
+### Check 10 — Third-party AI data sharing (Apple 5.1.2(i), Google User Data)
+Detect AI SDKs or hosts: `openai`, `@anthropic-ai/sdk`, `@google/generative-ai`, `@google/genai`, `firebase/vertexai`, `@firebase/ai`, `groq-sdk`, `replicate`, `ai` (Vercel AI SDK), or fetch calls to `api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`.
+If user content (text, photos, voice, profile data) is sent to one:
+- Apple requires clear disclosure of sharing personal data with third-party AI and the user's permission before it happens.
+- Google's User Data policy explicitly covers third-party AI integrations (limited use, disclosure, consent).
+- Check for an in-app disclosure/consent screen before the first AI call, a privacy-policy mention, and that the Data Safety form lists the data types as shared.
+- API keys for these providers in the client bundle → separate HIGH (secret exposure).
+
+**Severity:** HIGH if user data reaches a third-party AI with no in-app disclosure or consent; MEDIUM if a disclosure exists but the privacy policy / Data Safety mention can't be confirmed.
+
+### Check 11 — UGC moderation & anonymous chat (Apple 1.2, Google 1.13 / 1.14)
+Trigger if the app posts user content or has chat (`stream-chat-*`, `sendbird`, `@cometchat`, `react-native-gifted-chat`, Firestore/RTDB `messages`/`posts` collections, `socket.io-client`, upload code paths).
+- Require: report content, block user, a filter or moderation step, published contact info, and terms acceptance before posting.
+- Apple: since Jun 8, 2026 the developer must actually remove violating content; a report button with no takedown path behind it is not enough.
+- **Random / anonymous stranger chat as the core feature** (`randomMatch`, "next stranger", no persistent identity): Apple says these apps "do not belong on the App Store" (1.2, Feb 2026). Google restricts them under Age-Restricted Content and Child Safety from Aug 26, 2026 and bars them from targeting children.
+
+**Severity:** BLOCKER for random/anonymous stranger chat as the core feature (Apple); HIGH for UGC/chat without report + block; MEDIUM if report/block exist but no moderation or takedown path is visible.
 
 ## Output format
 

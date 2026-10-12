@@ -25,10 +25,10 @@ Invoke these commands when the user:
 
 1. **Detect the stack** — Read `package.json`, `app.json`, `ios/`, `android/` to determine whether this is Expo managed, Expo bare, React Native CLI, native iOS, or native Android.
 2. **Spawn 5 parallel subagents** — each agent in `agents/` audits one slice:
-   - `privacy-auditor.md` — ATT, PrivacyInfo.xcprivacy, permission usage strings, account deletion, data safety, forced-login justification
+   - `privacy-auditor.md` — ATT, PrivacyInfo.xcprivacy, permission usage strings, account deletion, data safety, forced-login justification, third-party AI disclosure, UGC moderation / anonymous chat
    - `iap-business-auditor.md` — Apple 3.1.1, Play Billing, subscription disclosure, ad placement
    - `permissions-auditor.md` — Android restricted permissions, foreground service types, prominent disclosure
-   - `metadata-auditor.md` — bundle IDs, icons, Sign in with Apple (Apple 4.8), target SDK, Guideline 3.2 business app distribution
+   - `metadata-auditor.md` — bundle IDs, icons, Sign in with Apple (Apple 4.8), Android target SDK 36, Xcode 26 build gate, Guideline 3.2 business app distribution, 4.3(b) saturated categories
    - `crash-risk-auditor.md` — stability, dev artifacts, minimum functionality, demo credentials
 3. **Aggregate findings** — produce a markdown report with BLOCKER, HIGH, MEDIUM, LOW, INFO severity tiers.
 4. **Reference the knowledge base** — `rules/ios-guidelines.md`, `rules/android-guidelines.md`, `rules/expo-rules.md`, and `rules/real-rejections.md` contain the source-of-truth compliance data.
