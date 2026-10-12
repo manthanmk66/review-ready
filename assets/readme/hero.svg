@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" role="img" aria-labelledby="title desc">
+  <title id="title">Review Ready</title>
+  <desc id="desc">Review Ready finds App Store and Google Play rejection causes in your code before you submit. A list of findings, each with a severity, a guideline number and a file location, resolves into a ready-to-submit verdict.</desc>
+
+  <defs>
+    <linearGradient id="shield" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#19C2C9"/>
+      <stop offset="1" stop-color="#2FC56A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="400" rx="28" fill="#0B1A22"/>
+
+  <g id="title-block" transform="translate(64 0)">
+    <text x="0" y="86" fill="#7FA0AD" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" letter-spacing="2">PRE-SUBMISSION AUDIT · APP STORE + PLAY</text>
+
+    <g transform="translate(0 116)">
+      <path d="M26 2 C34 6 44 9 52 11 C53 11 54 12 54 14 L54 32 C54 48 42 58 27 64 C26 64.5 26 64.5 25 64 C10 58 -2 48 -2 32 L-2 14 C-2 12 -1 11 0 11 C8 9 18 6 26 2 Z" fill="none" stroke="url(#shield)" stroke-width="7" stroke-linejoin="round" transform="translate(4 0)"/>
+      <path d="M17 34 L27 43 L44 25" fill="none" stroke="url(#shield)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="80" y="54" fill="#F2F7F8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="64" font-weight="800" letter-spacing="-1.5">Review Ready</text>
+    </g>
+
+    <text x="0" y="246" fill="#DCE8EC" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="28" font-weight="500">Find what App Review will reject</text>
+    <text x="0" y="284" fill="#DCE8EC" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="28" font-weight="500">while it's still in your code.</text>
+
+    <text x="0" y="340" fill="#7FA0AD" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">Claude Code · Cursor · Codex · npx CLI</text>
+  </g>
+
+  <g id="project-proof" transform="translate(648 52)" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+    <rect width="488" height="296" rx="18" fill="#0F2530" stroke="#1F3A47" stroke-width="1.5"/>
+
+    <g transform="translate(24 26)">
+      <rect width="104" height="32" rx="8" fill="#3A1A1F"/>
+      <text x="52" y="22" text-anchor="middle" fill="#FF7A7E" font-size="17" font-weight="700">BLOCKER</text>
+      <text x="124" y="23" fill="#F2F7F8" font-size="20">5.1.1</text>
+      <text x="440" y="23" text-anchor="end" fill="#7FA0AD" font-size="18">app.json:15</text>
+    </g>
+    <g transform="translate(24 74)">
+      <rect width="104" height="32" rx="8" fill="#3A1A1F"/>
+      <text x="52" y="22" text-anchor="middle" fill="#FF7A7E" font-size="17" font-weight="700">BLOCKER</text>
+      <text x="124" y="23" fill="#F2F7F8" font-size="20">Play §8.4</text>
+      <text x="440" y="23" text-anchor="end" fill="#7FA0AD" font-size="18">app.json:42</text>
+    </g>
+    <g transform="translate(24 122)">
+      <rect width="104" height="32" rx="8" fill="#3A2C14"/>
+      <text x="52" y="22" text-anchor="middle" fill="#F6B550" font-size="17" font-weight="700">HIGH</text>
+      <text x="124" y="23" fill="#F2F7F8" font-size="20">targetSdk 35</text>
+      <text x="440" y="23" text-anchor="end" fill="#7FA0AD" font-size="18">needs 36</text>
+    </g>
+    <g transform="translate(24 170)">
+      <rect width="104" height="32" rx="8" fill="#3A2C14"/>
+      <text x="52" y="22" text-anchor="middle" fill="#F6B550" font-size="17" font-weight="700">HIGH</text>
+      <text x="124" y="23" fill="#F2F7F8" font-size="20">4.8 SiwA</text>
+      <text x="440" y="23" text-anchor="end" fill="#7FA0AD" font-size="18">login.tsx</text>
+    </g>
+
+    <line x1="24" y1="222" x2="464" y2="222" stroke="#1F3A47" stroke-width="1.5" stroke-dasharray="4 6"/>
+
+    <g transform="translate(24 238)">
+      <rect width="440" height="40" rx="10" fill="#10352C"/>
+      <path d="M22 12 L30 20 L44 6" transform="translate(-2 7)" fill="none" stroke="#2FC56A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="58" y="27" fill="#7BE3A3" font-size="20" font-weight="700">fixed → ready to submit</text>
+    </g>
+  </g>
+</svg>

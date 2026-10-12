@@ -35,16 +35,34 @@ const SIWA_PACKAGES = ["expo-apple-authentication", "@invertase/react-native-app
 const BUSINESS_BUNDLE_RE = /\.(admin|staff|manager|b2b|internal|partner|partners|dealer|vendor)\b/i;
 const BUSINESS_NAME_RE = /\b(admin|manager|partner portal|dealer|vendor|staff portal|merchant app|driver app)\b/i;
 
-// Map Expo SDK major → Android targetSdk it compiles against (rules/expo-rules.md).
+// Map Expo SDK major → Android targetSdk of its bundled React Native template
+// (RN 0.76 → 34, 0.79 → 35, 0.81 → 36). SDK 52 compiles against 35 but targets 34.
 function expoToTargetSdk(expoMajor) {
-  if (expoMajor >= 52) return 35;
-  if (expoMajor === 51) return 34;
-  if (expoMajor === 50) return 34;
+  if (expoMajor >= 54) return 36;
+  if (expoMajor === 53) return 35;
+  if (expoMajor >= 50) return 34;
   if (expoMajor >= 48) return 33;
   return null;
 }
 
-const MIN_TARGET_SDK = 35; // Google Play requirement as of Aug 2025
+// Bare React Native: targetSdk from the template's libs.versions.toml.
+function rnToTargetSdk(minor) {
+  if (minor >= 81) return 36;
+  if (minor >= 77) return 35;
+  if (minor >= 73) return 34;
+  return null;
+}
+
+const MIN_TARGET_SDK = 36; // Google Play requirement for new apps and updates since Aug 31, 2026
+
+// Lowest Expo SDK whose default target meets the Play minimum.
+function minExpoSdkForTarget(target) {
+  for (let major = 48; major < 100; major++) {
+    const t = expoToTargetSdk(major);
+    if (t != null && t >= target) return major;
+  }
+  return null;
+}
 
 module.exports = {
   PLACEHOLDER_BUNDLE_RE,
@@ -57,5 +75,7 @@ module.exports = {
   BUSINESS_BUNDLE_RE,
   BUSINESS_NAME_RE,
   expoToTargetSdk,
+  rnToTargetSdk,
+  minExpoSdkForTarget,
   MIN_TARGET_SDK,
 };

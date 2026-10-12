@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.7.0] / [cli-0.2.0] - 2026-10-12
+
+Policy refresh against everything Apple and Google shipped between May and October 2026.
+
+### Changed: Google Play
+- **Target API 36 (Android 16)** is now the minimum for new apps and updates (in force since Aug 31, 2026; extensions ran to Nov 1, 2026). Wear OS / Automotive need 35, TV / XR need 34; existing apps need 35 to stay visible to new users. The CLI's `MIN_TARGET_SDK` is now 36.
+- **Fixed Expo → targetSdk mapping.** Expo SDK 52 targets API 34 (it compiles against 35), not 35, so the CLI was passing SDK 52 projects it should have flagged. The map is now 52 → 34, 53 → 35, 54+ → 36, taken from the bundled React Native template.
+- July 15, 2026 announcement folded in: `READ_CALL_LOG` for missed-call / flash-call phone verification is banned (BLOCKER; use SMS Retriever or the Digital Credentials API), anonymous / random chat apps fall under Age-Restricted Content + Child Safety from Aug 26, unrated apps aren't allowed, third-party AI integrations are covered by User Data, location Data safety guidance, and app registration for Android developer verification.
+- Past deadlines (16 KB pages, News declaration, Health org accounts, prediction-market enrollment) are now described as enforced instead of upcoming.
+
+### Changed: Apple
+- **Xcode 26 / iOS 26 SDK upload gate** (since Apr 28, 2026) and the iOS 13 deployment-target floor (since Sep 9, 2026). The metadata auditor and precheck flag Expo SDK ≤ 53 builds without an Xcode 26 EAS image.
+- **4.3(b) rewrite (Jun 8, 2026):** dating, flashlight, sound effects, wallpaper, simple timer, and fortune telling apps are rejected without a meaningful differentiator, and stale ones may be removed. New metadata-auditor Check 16.
+- **1.2:** random / anonymous chat named as not belonging on the App Store (Feb 6, 2026); developers must actually remove violating content (Jun 8, 2026).
+- **4.5.3:** Live Activities added to the no-spam rule.
+- **2.3.6:** new 13+ / 16+ / 18+ age rating questionnaire (required since Jan 31, 2026), plus an INFO note on US state age-assurance laws (Declared Age Range / Play Age Signals).
+
+### Added
+- `privacy-auditor` Check 10 (third-party AI data sharing) and Check 11 (UGC moderation and anonymous chat). Neither store rule was checked by any auditor before.
+- CLI target SDK check now reads `android/gradle.properties` (`android.targetSdkVersion`, where `expo-build-properties` writes it) and `android/build.gradle` / `build.gradle.kts`, ignores commented-out lines, infers from the React Native version for bare projects (0.73–0.76 → 34, 0.77–0.80 → 35, 0.81+ → 36), rejects non-integer `expo-build-properties` values instead of passing them, and derives the "upgrade to Expo SDK N+" advice from the map. Without the `gradle.properties` read, the API 36 bump would have flagged Expo 53 projects that already target 36.
+- 11 CLI tests for target SDK resolution (34 total).
+
 ## [cli-0.1.0] - 2026-06-20
 
 ### Added — Standalone deterministic CLI (`review-ready-cli` on npm)

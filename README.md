@@ -1,204 +1,169 @@
-<h1 align="left">
-  <img src="https://github.com/user-attachments/assets/8a830804-529a-4c0d-b901-8092bf82c3a4" alt="RR Logo" width="28" />
-   Review Ready
-</h1>
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="Review Ready: find what App Review will reject while it's still in your code. Example findings: Apple 5.1.1 blocker in app.json, Play photo permission blocker, targetSdk 35 below the required 36, missing Sign in with Apple.">
+</p>
 
-**Pre-submission compliance auditor for iOS App Store & Google Play.** Stop guessing what will get your app rejected — scan it first.
+<p align="center">
+  <a href="https://claude.ai/plugins"><img src="https://img.shields.io/badge/Claude%20Code-plugin-0B1A22?labelColor=19C2B5" alt="Claude Code plugin"></a>
+  <a href="https://cursor.com/marketplace"><img src="https://img.shields.io/badge/Cursor-plugin-0B1A22?labelColor=19C2B5" alt="Cursor plugin"></a>
+  <a href="https://developers.openai.com/codex/plugins"><img src="https://img.shields.io/badge/Codex-plugin-0B1A22?labelColor=19C2B5" alt="Codex plugin"></a>
+  <a href="packages/cli"><img src="https://img.shields.io/badge/npx-review--ready--cli-0B1A22?labelColor=2FC56A" alt="npx review-ready-cli"></a>
+  <img src="https://img.shields.io/badge/policies-Oct%202026-0B1A22?labelColor=2FC56A" alt="Policies current as of October 2026">
+  <img src="https://img.shields.io/badge/license-MIT-0B1A22?labelColor=7FA0AD" alt="MIT license">
+</p>
 
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://claude.ai/plugins) [![Cursor](https://img.shields.io/badge/Cursor-Plugin-black)](https://cursor.com/marketplace) [![Codex](https://img.shields.io/badge/Codex-Plugin-10a37f)](https://developers.openai.com/codex/plugins) ![Status](https://img.shields.io/badge/status-beta-orange) ![License](https://img.shields.io/badge/license-MIT-green)
+Review Ready scans an iOS, Android, Expo or React Native project against Apple's App Review Guidelines and Google Play's Developer Policy, then tells you what will get rejected, where it lives (`file:line`), which guideline it breaks, and how to fix it. Run it before you hit **Submit for Review**, not after the rejection email.
 
-Works in **Claude Code**, **Cursor**, and **Codex** — one plugin, three tools.
+It's one plugin for **Claude Code**, **Cursor** and **Codex**, plus a no-LLM CLI for CI.
 
-> ⚡ **Prefer a zero-config CLI?** `npx review-ready-cli` runs the deterministic checks with **no API key, no LLM** — locally or in CI (exits non-zero on blockers). It complements the AI plugin: the CLI catches mechanical rejection causes, the plugin adds judgment-based checks. See **[packages/cli](packages/cli)**.
+<p align="center">
+  <img src="./assets/readme/report-dashboard.png" width="100%" alt="Review Ready HTML report for a sample Expo app: NOT READY verdict, 2 blockers, 2 high, 1 medium, 6 passed. Blocker cards for a missing NSCameraUsageDescription (Apple 5.1.1, app.json:15) and READ_MEDIA_IMAGES on a one-off picker (Google Play photo and video permissions, app.json:42), each with a fix.">
+</p>
+<p align="center"><sub>The HTML report from a scan of a sample Expo app. It opens in your browser when the scan finishes.</sub></p>
 
----
+## What it catches
 
-## What it does
+**Apple**
+- Missing or generic permission purpose strings (5.1.1), the most common rejection we see
+- `PrivacyInfo.xcprivacy` gaps that trigger ITMS-91053 emails
+- Third-party login without Sign in with Apple (4.8), including Firebase phone auth
+- IAP bypass: Stripe or Razorpay selling digital goods (3.1.1)
+- Account creation with no in-app deletion (5.1.1(v))
+- B2B apps submitted for public distribution (3.2), saturated-category clones (4.3(b)), anonymous stranger chat (1.2)
+- Builds that aren't on Xcode 26 / the iOS 26 SDK, which App Store Connect has rejected at upload since April 28, 2026
 
-Run one command and find out **before** you submit:
+**Google Play**
+- `targetSdk` below API 36, required for new apps and updates since August 31, 2026
+- `READ_MEDIA_IMAGES` on a one-off photo picker, which pre-review blocks outright
+- Restricted permissions that need a Play Console declaration (SMS, call log, all-files, background location, contacts)
+- `READ_CALL_LOG` used for missed-call phone verification, banned since July 2026
+- Foreground services without a `foregroundServiceType`
+- 16 KB page-size support, 64-bit ABIs, and Data safety mismatches
 
-- Every Apple App Store Review Guideline violation in your project
-- Every Google Play Developer Policy issue
-- Privacy manifest gaps (the #1 cause of "ITMS-91053" emails from Apple)
-- Permission usage strings missing or too generic
-- IAP bypass attempts that get auto-rejected
-- Account deletion missing (required since 2022)
-- Sign in with Apple gaps when third-party login is present
-- Target SDK / 64-bit / 16 KB page size compliance
-- Foreground service type declarations
-- Data Safety form misalignment
+Built for Expo and React Native first, with full support for native iOS and native Android projects.
 
-Built for **Expo / React Native** projects first, with full **native iOS** and **native Android** support.
+## How it works
 
----
+<p align="center">
+  <img src="./assets/readme/workflow.svg" width="100%" alt="A scan reads app.json, Info.plist, AndroidManifest.xml, package.json and eas.json, runs five auditors in parallel (privacy, IAP and business, permissions, metadata, crash risk), and merges their findings into one ranked report. /review-ready:fix applies the safe fixes.">
+</p>
+
+`/review-ready:scan` detects your stack, then runs five auditors in parallel:
+
+| Auditor | Covers |
+|---|---|
+| `privacy-auditor` | ATT, privacy manifest, purpose strings, account deletion, Data safety, third-party AI disclosure, UGC moderation |
+| `iap-business-auditor` | Apple 3.1.1 IAP, Play Billing, subscription disclosure, ad placement |
+| `permissions-auditor` | Android restricted permissions, photo picker misuse, foreground service types, prominent disclosure |
+| `metadata-auditor` | Bundle IDs, icons, Sign in with Apple, target SDK, Xcode 26 build gate, 3.2 business apps, 4.3 spam |
+| `crash-risk-auditor` | Crash patterns, localhost URLs, demo credentials, minimum functionality |
+
+Each auditor reads a knowledge base in [`rules/`](rules), which includes [`real-rejections.md`](rules/real-rejections.md): verbatim rejection emails from real submissions, alongside the published guideline text.
 
 ## Install
 
-### Claude Code
-```bash
-# From marketplace (after approval)
-/plugin install review-ready
+**Claude Code**
 
-# Or locally:
+```bash
+/plugin install review-ready
+# or locally
 git clone https://github.com/manthanmk66/review-ready ~/.claude/plugins/review-ready
 ```
-Restart Claude Code after install.
 
-### Cursor
-1. Open Cursor → Settings → Plugins → Add from GitHub
-2. Paste: `https://github.com/manthanmk66/review-ready`
-3. Or install directly from the [Cursor Marketplace](https://cursor.com/marketplace) (after approval)
+Restart Claude Code afterwards.
 
-### Codex
+**Cursor**: Settings → Plugins → Add from GitHub → `https://github.com/manthanmk66/review-ready`, or install it from the [Cursor Marketplace](https://cursor.com/marketplace).
+
+**Codex**
+
 ```bash
-# Inside Codex CLI
 /plugin marketplace add manthanmk66/review-ready
 /plugin install review-ready@review-ready-marketplace
 /reload-plugins
 ```
 
-Or clone the repo into a project — Codex auto-reads the `AGENTS.md` file.
+Codex also picks up [`AGENTS.md`](AGENTS.md) if you clone the repo into a project.
 
----
+**CLI, no API key**
+
+```bash
+npx review-ready-cli
+```
+
+The CLI runs the deterministic checks (permissions and metadata) with no LLM. It exits non-zero on blockers and has a `--base` PR mode that only reports newly introduced issues. See [`packages/cli`](packages/cli) for the GitHub Action.
 
 ## Commands
 
-### `/review-ready:scan`
-Full audit. Spawns 5 parallel subagents:
-- `privacy-auditor` — ATT, PrivacyInfo.xcprivacy, usage strings, data safety
-- `iap-business-auditor` — IAP enforcement, subscriptions, ad placement
-- `permissions-auditor` — restricted permissions, FGS types, prominent disclosure
-- `metadata-auditor` — bundle IDs, icons, Sign in with Apple, target SDK
-- `crash-risk-auditor` — crash patterns, localhost URLs, minimum functionality
+| Command | What it does | Time |
+|---|---|---|
+| `/review-ready:scan` | Full audit with five parallel auditors, a terminal report and an HTML dashboard | a few minutes |
+| `/review-ready:precheck` | The ten blockers that matter most, nothing else | ~30 s |
+| `/review-ready:fix` | Applies the safe fixes: purpose strings, encryption flag, privacy manifest stub, ATT setup, over-declared Android permissions | seconds |
 
-Outputs a severity-ranked report with exact file:line references and fixes for every issue.
+The plugin also watches edits to `Info.plist`, `PrivacyInfo.xcprivacy`, `AndroidManifest.xml`, `app.json` / `app.config.*`, `eas.json` and `*.entitlements`, and warns you when an edit introduces a compliance problem.
 
-### `/review-ready:precheck`
-Fast pre-submission sanity check. Top 10 blockers only. ~30 seconds.
-
-### `/review-ready:fix`
-Auto-applies safe fixes from the latest scan — missing usage strings, encryption flags, PrivacyInfo.xcprivacy stub, expo-tracking-transparency setup.
-
----
-
-## Auto-warnings (hooks)
-
-The plugin watches edits to these files and reminds you of compliance pitfalls in real time:
-
-- `Info.plist`
-- `PrivacyInfo.xcprivacy`
-- `AndroidManifest.xml`
-- `app.json` / `app.config.js`
-- `eas.json`
-- `*.entitlements`
-
----
-
-## Example output
-
-Every scan produces **two views**: a rich summary in your terminal, and a
-colourful **Dashboard HTML report** that opens in your browser automatically.
-
-**1. In the terminal** — emoji-coded severity, a per-store summary table, and a
-severity gauge:
+<details>
+<summary>Terminal report example</summary>
 
 ```
-# 🛡️ Review Ready — Audit Report
-Acme · Expo SDK 54 / React Native 0.81 · scanned 2026-06-14
+# Review Ready — Audit Report
+Acme Delivery · Expo SDK 53 / React Native 0.79 · scanned 2026-10-12
 
-> 🔴 NOT READY — 2 blockers must be fixed before submitting
+> NOT READY — 2 blockers must be fixed before submitting
 
-| Store    | 🛑 Blockers | ⚠️ High | 📋 Medium | ✅ Passed |
-|----------|:----------:|:------:|:--------:|:--------:|
-| 🍎 Apple | 2          | 3      | 4        | 24       |
-| 🤖 Google| 0          | 1      | 2        | 28       |
+| Store  | Blockers | High | Medium | Passed |
+|--------|:--------:|:----:|:------:|:------:|
+| Apple  | 1        | 1    | 1      | 3      |
+| Google | 1        | 1    | 0      | 3      |
 
-Severity mix  🛑🛑⚠️⚠️⚠️📋📋📋📋  → ████░░░░░░ 22% critical
-
-## 🛑 Blockers — fix these first
-1. Missing NSCameraUsageDescription   🔧 auto-fixable
-   📕 Apple 5.1.1 — Data Collection & Storage · 📍 app.json:15
-   ✅ Fix: add NSCameraUsageDescription to ios.infoPlist
+## Blockers
+1. Missing NSCameraUsageDescription            auto-fixable
+   Apple 5.1.1 — Data Collection & Storage · app.json:15
+   Fix: add NSCameraUsageDescription to ios.infoPlist
 ...
 ```
 
-**2. In your browser** — a self-contained `review-ready-report.html` (Dashboard
-style): readiness badge, colour stat cards (Blockers / High / Medium / Passed),
-severity-coded issue cards with guideline refs and fixes, and a manual-steps
-checklist. It opens the instant the scan finishes, has zero external
-dependencies, and can be re-opened or shared anytime.
+Add `review-ready-report.html` to `.gitignore` if you don't want to commit the report.
 
-> Tip: add `review-ready-report.html` to `.gitignore` if you don't want to
-> commit the report.
+</details>
 
----
+## Policy coverage
 
-## What it knows
+| Source | Current as of |
+|---|---|
+| Apple App Review Guidelines | June 8, 2026 revision (4.3 spam rewrite, 1.2 anonymous chat, 4.5.3 Live Activities) |
+| Apple upload requirements | Xcode 26 / iOS 26 SDK (Apr 28, 2026), iOS 13 minimum deployment target (Sep 9, 2026), new age ratings (Jan 31, 2026) |
+| Google Play Developer Policy | July 15, 2026 announcement (call log verification, anonymous chat, developer verification, third-party AI) |
+| Google Play technical | Target API 36 (Aug 31, 2026), 16 KB page sizes (May 1, 2026) |
 
-The plugin ships with a structured knowledge base captured from the latest Apple and Google policies:
-
-- **`rules/ios-guidelines.md`** — All Apple App Store Review Guidelines (Sections 1–5), Privacy Manifest spec, Required Reason APIs, ATT requirements, Sign in with Apple rules
-- **`rules/android-guidelines.md`** — Full Google Play Developer Policy, Data Safety, foreground service types, permission declarations, target SDK requirements, 2026 deadlines (16 KB pages, Health/News declarations, contacts policy)
-- **`rules/expo-rules.md`** — Maps every store rule to specific Expo `app.json` / `eas.json` keys and SDK detection patterns
-
-Updated against guidelines as of **May 2026**.
-
----
+The full knowledge base is in [`rules/ios-guidelines.md`](rules/ios-guidelines.md), [`rules/android-guidelines.md`](rules/android-guidelines.md) and [`rules/expo-rules.md`](rules/expo-rules.md). Changes are logged in the [CHANGELOG](CHANGELOG.md).
 
 ## Supported stacks
 
 | Stack | Status |
-|-------|--------|
-| Expo (managed) | ✅ Fully supported |
-| Expo (bare) | ✅ Fully supported |
-| React Native CLI | ✅ Fully supported |
-| Native iOS (Swift/Obj-C) | ✅ Fully supported |
-| Native Android (Kotlin/Java) | ✅ Fully supported |
-| Flutter | 🚧 Planned for v0.2 |
-
----
-
-## Why this plugin exists
-
-App Store rejections are the silent killer of mobile development velocity:
-
-- Average rejection cycle: 24–48 hours of wait time per round
-- Average iOS app needs 2–4 rejection cycles before approval
-- Each cycle costs roughly a week of momentum
-- Most rejections are for the **same handful of issues** the developer didn't know about
-
-This plugin encodes the institutional knowledge that experienced mobile leads have — applied automatically before you ever hit "Submit for Review."
-
----
+|---|---|
+| Expo (managed and bare) | Supported |
+| React Native CLI | Supported |
+| Native iOS (Swift / Obj-C) | Supported |
+| Native Android (Kotlin / Java) | Supported |
+| Flutter | Planned |
 
 ## Limitations
 
-Some issues can't be detected from code alone:
+A code scan can't see everything a reviewer sees:
 
-- **App Store Connect / Play Console settings** — privacy nutrition labels, demo account info, age rating, content policies. The plugin reminds you to verify these manually.
-- **Visual / content judgment** — copycat detection, asset quality, design polish.
-- **Runtime behavior** — actual crashes, performance, ANRs (recommend integrating Sentry or Crashlytics).
-- **Pending policy changes** — the plugin flags known upcoming deadlines (16 KB pages, target SDK bumps), but new policies may emerge. Re-check Apple/Google docs quarterly.
-
----
+- **Console settings.** Privacy nutrition labels, age rating answers, demo accounts and declarations live in App Store Connect and Play Console. The report lists them as manual steps.
+- **Judgment calls.** Copycat detection, design polish and asset quality need a human.
+- **Runtime behavior.** Crashes, ANRs and performance need a crash reporter such as Sentry or Crashlytics.
+- **New policy.** Apple and Google change rules several times a year. Re-check the official docs before a major release.
 
 ## Contributing
 
-Issues and PRs welcome at [github.com/manthanmk66/review-ready](https://github.com/manthanmk66/review-ready).
+Issues and PRs are welcome at [github.com/manthanmk66/review-ready](https://github.com/manthanmk66/review-ready).
 
-**Adding a rule?** Edit the relevant `rules/*.md` file and the corresponding subagent in `agents/`.
-**Adding a stack?** Add a new `rules/<stack>-rules.md` and update the scan skill's stack detection.
-
----
+- **Adding a rule:** edit the matching `rules/*.md` file and the auditor in `agents/` that should check it.
+- **Adding a stack:** add `rules/<stack>-rules.md` and extend stack detection in `skills/scan/SKILL.md`.
+- **Got a rejection email?** Add it verbatim to `rules/real-rejections.md` with the failing pattern and the fix that worked.
 
 ## License
 
-MIT
-
----
-
-## Acknowledgments
-
-Built on the [Claude Code](https://claude.com/claude-code) plugin platform. Knowledge base compiled from Apple's [App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) and Google's [Play Developer Policy Center](https://play.google/developer-content-policy/).
-
-Inspired by every developer who's watched their build sit in "In Review" for 48 hours just to be rejected for a missing usage string.
+MIT. Knowledge base compiled from Apple's [App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) and Google's [Play Developer Policy Center](https://play.google/developer-content-policy/).

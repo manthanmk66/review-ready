@@ -2,7 +2,7 @@
 
 > Structured reference for static-scanner-based policy compliance checking of Android apps.
 > Compiled from Google's Developer Policy Center, Play Console Help, and developer.android.com.
-> Reflects policies in effect as of **May 2026**, including the **April 15, 2026** policy announcement and **January 28, 2026** Health enforcement.
+> Reflects policies in effect as of **October 2026**, including the **July 15, 2026** and **April 15, 2026** policy announcements, the **August 31, 2026** target API bump, and **January 28, 2026** Health enforcement.
 >
 > NOTE: Several Google Play / Play Console URLs are gated and could not be fetched directly during compilation. Where direct fetch was blocked, sourced content was reconstructed from official Google help-article excerpts surfaced through search. Always link the Play Console policy page in user-facing reports rather than relying on this document as the canonical source.
 
@@ -122,6 +122,16 @@
 **Common rejection example:** Social app allows photo posts; no in-app report button anywhere; no TOS acceptance.
 **Fix:** Add report-and-block UI accessible from each content item and each user profile; add TOS acceptance gate.
 
+### 1.14 Anonymous & Random Chat Apps (July 15, 2026 update; applies from Aug 26, 2026)
+**Rule:** Apps whose core experience is anonymous or random one-to-one chat (stranger matching, "Chatroulette-style", anonymous confession/messaging) now fall under expanded **Age-Restricted Content** and **Child Safety Standards** requirements, and may not target children under the **Families** policy.
+**Auto-checkable:** Partial
+**What to check:**
+- Chat SDKs (`stream-chat`, `sendbird`, `@cometchat`, Firebase Realtime/Firestore chat collections, `socket.io`) combined with random-match / anonymous-handle flows (no profile, "skip", "next stranger", `randomMatch`, `anonymous`).
+- Families target audience or under-13 age band selected in Play Console.
+- Age gate before entering chat; report + block on every conversation.
+**Common rejection example:** "Talk to strangers" app with no age assurance, listed with a target audience that includes under-18s.
+**Fix:** Set target audience to 18+, add age assurance before chat entry, add report/block + moderation, publish Child Safety Standards (CSAE) policy and contact.
+
 ---
 
 ## 2. Impersonation
@@ -166,6 +176,7 @@
 - SDKs that exfiltrate data without disclosure (compare manifest SDK list to Data Safety form).
 **Common rejection example:** Manifest requests `READ_CONTACTS` but the app has no contact-related feature; `usesCleartextTraffic="true"` on a banking app.
 **Fix:** Remove unused permissions; remove cleartext flag; pin certificates; publish privacy policy URL.
+**Third-party AI (clarified July 15, 2026):** User Data requirements (limited use, disclosure, consent) explicitly apply to data sent to third-party AI integrations (OpenAI, Gemini, Anthropic, etc. via SDK or your backend). Flag AI SDKs / API hosts in code and confirm the privacy policy and Data Safety form disclose the sharing.
 
 ### 4.2 Personal & Sensitive Information
 **Rule:** Personal and sensitive user data (contacts, photos, SMS, call logs, microphone, location, financial info, health info, government IDs) requires runtime consent, in-app prominent disclosure, encryption at rest and in transit, and a posted privacy policy.
@@ -384,7 +395,8 @@ Covered under [Section 1](#1-restricted-content).
 - Presence of an intent filter for `android.intent.action.SENDTO` with `smsto:` data → default SMS handler signal.
 - App's category (must match dialer/SMS to legitimately request).
 **Common rejection example:** Wallpaper app requests `READ_SMS` for "OTP auto-fill" → policy violation; should use SMS Retriever API instead.
-**Fix:** Remove permission; use SMS Retriever API or SMS User Consent API for OTP; submit declaration if eligible.
+**July 15, 2026 update:** Phone-call account verification (missed-call / flash-call OTP that reads the call log) is **no longer an allowed use case** for `READ_CALL_LOG`. Flag `READ_CALL_LOG` together with verification SDKs or code (`flashcall`, `missedcall`, Sinch/Truecaller/Exotel verification, `CallLog.Calls.CONTENT_URI` near OTP logic) as a BLOCKER.
+**Fix:** Remove permission; use SMS Retriever API or SMS User Consent API for OTP; for phone-number verification use the Digital Credentials API (directly or via a provider built on it); submit declaration if eligible.
 
 ### 8.2 Location – Background Location
 **Permission:** `ACCESS_BACKGROUND_LOCATION`
@@ -580,8 +592,8 @@ Cross-reference [Section 18](#18-foreground-services).
 
 ## 11. News & Magazines
 
-### 11.1 News Self-Declaration (deadline May 27, 2026)
-**Rule:** All news and magazine apps must complete a News self-declaration in Play Console. Apps without the declaration will be removed.
+### 11.1 News Self-Declaration (enforced since May 27, 2026)
+**Rule:** All news and magazine apps must complete a News self-declaration in Play Console. Apps without the declaration are being removed.
 **Auto-checkable:** Partial (Play Console field, not APK).
 
 ### 11.2 Publisher Information
@@ -630,10 +642,10 @@ Cross-reference [Section 18](#18-foreground-services).
 ### 13.2 Daily Fantasy Sports (DFS)
 **Rule:** US-only or eligible non-US countries under DFS pilot. Must complete DFS application.
 
-### 13.3 Country Pilots (May 2026)
+### 13.3 Country Pilots
 - Mexico: DFS pilot active.
 - India: DFS/Rummy pilot ended; grace period expired Jan 22, 2026.
-- **Prediction Markets**: global pilot — apps must enroll by **June 1, 2026** or face removal.
+- **Prediction Markets**: global pilot; enrollment deadline was **June 1, 2026**. Unenrolled prediction-market apps are subject to removal.
 
 ### 13.4 Loot Boxes / Paid Random Mechanics
 **Rule:** Must disclose odds before purchase. Cannot target children without parental safeguards.
@@ -665,16 +677,17 @@ Cross-reference [Section 18](#18-foreground-services).
 
 ## 15. Technical Requirements
 
-### 15.1 Target SDK Level (as of May 2026)
+### 15.1 Target SDK Level (since Aug 31, 2026)
 **Rule:**
-- **New apps & app updates: must target Android 15 (API 35).** Effective Aug 31, 2025; extension to Nov 1, 2025 was available.
-- **Existing apps to remain available to new users: target Android 14 (API 34) minimum.** Apps targeting API 33 or lower are restricted to devices running the same or lower Android OS version.
-- **Exceptions** (Wear OS, Android TV, Android Automotive): Android 14 (API 34) for new/updates; older Wear OS / TV apps targeting API 31 or lower also subject to restrictions.
+- **New apps & app updates: must target Android 16 (API 36).** Effective Aug 31, 2026; an extension to **Nov 1, 2026** could be requested in Play Console. After Nov 1, 2026 uploads below API 36 are rejected.
+- **Wear OS & Android Automotive OS:** API 35 for new apps/updates. **Android TV & Android XR:** API 34.
+- **Existing apps to remain available to new users: target Android 15 (API 35) minimum.** Apps targeting API 34 or lower (33 or lower for Wear OS / TV / XR, 31 or lower for Automotive) are only shown to devices on the same or lower Android version.
+- **Expo mapping:** SDK 52 → API 34 (compileSdk 35), SDK 53 → API 35, SDK 54+ → API 36.
 **Auto-checkable:** Yes
 **What to check:**
 - `build.gradle` (module): `targetSdkVersion` / `targetSdk`.
 - Or `AndroidManifest.xml` `<uses-sdk android:targetSdkVersion="..."/>`.
-**Fix:** Bump `targetSdk 35`; address all behavior changes (background restrictions, permissions, foreground service types).
+**Fix:** Bump `targetSdk 36` (Expo: upgrade to SDK 54+ or set `android.targetSdkVersion: 36` via `expo-build-properties`). API 36 behavior changes to test: edge-to-edge can no longer be opted out of, predictive back is on by default, and orientation/resizability locks are ignored on large screens (sw ≥ 600dp).
 
 ### 15.2 64-bit Architecture
 **Rule:** All apps with native code must include 64-bit (arm64-v8a, x86_64) versions in addition to 32-bit.
@@ -689,7 +702,7 @@ Cross-reference [Section 18](#18-foreground-services).
 ### 15.3 16 KB Page Size Compatibility
 **Rule:**
 - Since **Nov 1, 2025**: all new apps and updates **targeting API 35+** must support 16 KB page sizes.
-- From **May 1, 2026**: app updates without 16 KB support cannot be released.
+- Since **May 1, 2026**: app updates without 16 KB support cannot be released.
 **Auto-checkable:** Yes
 **What to check:**
 - Inspect ELF program headers of `.so` files for `p_align >= 0x4000`.
@@ -740,6 +753,15 @@ Cross-reference [Section 18](#18-foreground-services).
 ### 15.11 ProGuard / R8 obfuscation
 **Rule:** Not required, but heavily obfuscated APKs without source mapping uploaded may delay review. `mappingFile` upload required for crash de-obfuscation.
 
+### 15.12 Android Developer Verification & App Registration (July 15, 2026 update)
+**Rule:** Every app you distribute on Play must be **registered in Play Console** under a verified developer identity. Unregistered apps risk **global removal** from Google Play. From **Sep 30, 2026**, apps installed on certified Android devices in Brazil, Indonesia, Singapore and Thailand (including sideloaded and third-party-store installs) must come from a verified developer; global rollout follows in 2027.
+**Auto-checkable:** No (Play Console state).
+**Fix:** Play Console Home → complete developer verification and register every package name you ship, including ones distributed outside Play.
+
+### 15.13 Content Rating Required (clarified July 15, 2026)
+**Rule:** Unrated apps are not allowed on Google Play. Complete the IARC content rating questionnaire for every app and re-answer it when features change (e.g. adding chat, UGC, AI generation, gambling mechanics).
+**Auto-checkable:** No (Play Console state).
+
 ---
 
 ## 16. Account Deletion
@@ -787,7 +809,7 @@ Temporary disable/freeze does **not** count.
 - **Web browsing history**.
 - **App info and performance**: crash logs, diagnostics, other.
 - **Device or other IDs**: includes Android Advertising ID (AAID), Android ID, IMEI, etc. (Android ID explicitly classified here since April 10, 2025.)
-- **Location**: approximate, precise.
+- **Location**: approximate, precise. (Google added location-specific Data safety guidance on July 15, 2026: if `ACCESS_FINE_LOCATION` is requested by the app or any SDK, check that *precise* location is declared.)
 
 ### 17.4 Purposes (must declare each)
 - App functionality
@@ -876,7 +898,7 @@ Temporary disable/freeze does **not** count.
 A condensed actionable checklist for a static scanner targeting an AAB / APK and its accompanying repo:
 
 ### A. AndroidManifest.xml
-- [ ] `<uses-sdk android:targetSdkVersion>` ≥ 35 (or category-specific min).
+- [ ] `<uses-sdk android:targetSdkVersion>` ≥ 36 (Wear OS / Automotive ≥ 35, TV / XR ≥ 34).
 - [ ] No unused / unjustified sensitive permissions (`READ_SMS`, `READ_CALL_LOG`, `READ_CONTACTS`, `MANAGE_EXTERNAL_STORAGE`, `QUERY_ALL_PACKAGES`, `BIND_ACCESSIBILITY_SERVICE`, `BIND_VPN_SERVICE`, `PACKAGE_USAGE_STATS`, `REQUEST_INSTALL_PACKAGES`, `SYSTEM_ALERT_WINDOW`, `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`, `ACCESS_BACKGROUND_LOCATION`, `SCHEDULE_EXACT_ALARM`, health-data permissions).
 - [ ] Every foreground service has `foregroundServiceType` attribute + matching `FOREGROUND_SERVICE_*` permission.
 - [ ] `BLUETOOTH_SCAN` declared with `usesPermissionFlags="neverForLocation"` when location isn't needed.
@@ -889,7 +911,7 @@ A condensed actionable checklist for a static scanner targeting an AAB / APK and
 - [ ] No legacy/dangerous receivers (`SMS_RECEIVED`, `BOOT_COMPLETED` with broad logic) without justification.
 
 ### B. build.gradle / Gradle Config
-- [ ] `compileSdk`/`targetSdk` ≥ 35.
+- [ ] `compileSdk`/`targetSdk` ≥ 36.
 - [ ] `ndk.abiFilters` includes `arm64-v8a` (64-bit support).
 - [ ] AGP ≥ 8.5.1, NDK ≥ r28 for 16 KB page-size compatibility.
 - [ ] `com.android.billingclient:billing` ≥ 6.x present if app sells digital content.
@@ -919,6 +941,9 @@ A condensed actionable checklist for a static scanner targeting an AAB / APK and
 - [ ] HTTPS-only network calls (no `http://` hard-coded endpoints to user-data services).
 - [ ] Photo Picker (`PickVisualMedia`) preferred over `READ_MEDIA_IMAGES` when feasible.
 - [ ] Contact Picker preferred over `READ_CONTACTS` when feasible.
+- [ ] No `READ_CALL_LOG` used for missed-call / flash-call phone verification.
+- [ ] Anonymous / random chat flows have an age gate, report + block, and an 18+ target audience.
+- [ ] Data sent to third-party AI APIs disclosed in privacy policy and Data Safety.
 
 ### E. Play Console Submissions Required (manual / API-driven verification)
 - [ ] Privacy Policy URL.
@@ -927,12 +952,14 @@ A condensed actionable checklist for a static scanner targeting an AAB / APK and
 - [ ] Permissions Declarations for any of: SMS/Call Log, All Files Access, QUERY_ALL_PACKAGES, Accessibility, Health Apps, Photo/Video, Background Location, VPN Service.
 - [ ] Foreground Service Types declaration with feature descriptions and video demos for each type used.
 - [ ] Financial Features Declaration (if applicable).
-- [ ] News Self-Declaration (if news/magazine app; deadline May 27, 2026).
-- [ ] Health Apps Declaration + Organization Account verified (deadline Jan 28, 2026).
+- [ ] News Self-Declaration (if news/magazine app; enforced since May 27, 2026).
+- [ ] Health Apps Declaration + Organization Account verified (enforced since Jan 28, 2026).
 - [ ] Real-Money Gambling registration + license for each country.
 - [ ] Families program opt-in if targeting children + Families Self-Certified Ads SDK.
 - [ ] AI Content disclosure if generative-AI app.
-- [ ] Prediction Market pilot enrollment (deadline June 1, 2026, if applicable).
+- [ ] Prediction Market pilot enrollment (if applicable; deadline was June 1, 2026).
+- [ ] Developer verification complete and every package registered in Play Console.
+- [ ] Content rating questionnaire completed (unrated apps are not allowed).
 
 ---
 
@@ -940,7 +967,9 @@ A condensed actionable checklist for a static scanner targeting an AAB / APK and
 
 - [Developer Policy Center](https://play.google/developer-content-policy/)
 - [Developer Program Policy (Play Console Help, April 15 2026)](https://support.google.com/googleplay/android-developer/answer/16933379)
+- [Policy announcement: July 15, 2026](https://support.google.com/googleplay/android-developer/answer/17134731)
 - [Policy announcement: April 15, 2026](https://support.google.com/googleplay/android-developer/answer/16926792)
+- [Target API level requirements](https://developer.android.com/google/play/requirements/target-sdk)
 - [Permissions and APIs that Access Sensitive Information](https://support.google.com/googleplay/android-developer/answer/16558241)
 - [Use of SMS or Call Log permission groups](https://support.google.com/googleplay/android-developer/answer/10208820)
 - [Use of MANAGE_EXTERNAL_STORAGE](https://support.google.com/googleplay/android-developer/answer/10467955)

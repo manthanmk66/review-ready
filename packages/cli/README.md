@@ -74,7 +74,7 @@ Two auditors are ported to the deterministic engine. Run all, or one with `--cat
 - **Bundle identifiers** — missing → BLOCKER; placeholder (`com.anonymous.*`, `com.example.*`) → HIGH.
 - **Encryption export compliance** — `ios.config.usesNonExemptEncryption` unset → HIGH (auto-fixable; blocks every App Store Connect upload).
 - **Sign in with Apple (Apple 4.8)** — confirmed social login (Google/Facebook/…) without `expo-apple-authentication` → BLOCKER; hosted-account auth (Firebase/Auth0/Clerk, incl. phone-OTP) without SiwA → HIGH.
-- **Android target SDK** — below API 35 → BLOCKER (literal in build.gradle) or HIGH (inferred from Expo SDK).
+- **Android target SDK** — below API 36 → BLOCKER (set in `android/app/build.gradle`, `android/gradle.properties` or `expo-build-properties`) or HIGH (inferred from the Expo / React Native version).
 - **App name** — > 30 chars → HIGH; promotional words / emoji → MEDIUM.
 - **Version & build numbers** — non-semver version, non-integer `versionCode`, non-string `buildNumber` → flagged (respects `eas.json` remote version source).
 - **App Transport Security** — `NSAllowsArbitraryLoads: true` → HIGH.

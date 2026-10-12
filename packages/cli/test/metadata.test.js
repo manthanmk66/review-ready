@@ -82,23 +82,106 @@ test("Firebase phone auth without SiwA → HIGH (broader rule)", () => {
   assert.ok(has(r, "HIGH", "Sign in with Apple likely required"), JSON.stringify(r.issues, null, 2));
 });
 
-test("targetSdk below 35 in build.gradle → BLOCKER", () => {
+test("targetSdk below 36 in build.gradle → BLOCKER", () => {
   const dir = makeProject("low-target", {
     "package.json": { name: "x", dependencies: { "react-native": "0.79.0" } },
     "android/app/build.gradle": "android {\n  defaultConfig {\n    targetSdkVersion 33\n  }\n}",
   });
   const r = meta(dir);
-  assert.ok(has(r, "BLOCKER", "below the required 35"), JSON.stringify(r.issues, null, 2));
+  assert.ok(has(r, "BLOCKER", "below the required 36"), JSON.stringify(r.issues, null, 2));
 });
 
-test("Expo 54 infers target SDK 35 → passes", () => {
+test("Expo 54 infers target SDK 36 → passes", () => {
   const dir = makeProject("expo54-target", {
     "package.json": { name: "x", dependencies: { expo: "54.0.33" } },
     "app.json": { expo: { name: "X", version: "1.0.0", ios: { bundleIdentifier: "com.acme.x", config: { usesNonExemptEncryption: false } }, android: { package: "com.acme.x" } } },
   });
   const r = meta(dir);
   assert.ok(!has(r, "BLOCKER", "target"), "Expo 54 should not flag target SDK");
-  assert.ok(r.passed.some((p) => /target SDK 35/.test(p)));
+  assert.ok(r.passed.some((p) => /target SDK 36/.test(p)));
+});
+
+test("Expo 53 infers target SDK 35 → HIGH (below 36, inferred)", () => {
+  const dir = makeProject("expo53-target", {
+    "package.json": { name: "x", dependencies: { expo: "53.0.0" } },
+    "app.json": { expo: { name: "X", version: "1.0.0", ios: { bundleIdentifier: "com.acme.x", config: { usesNonExemptEncryption: false } }, android: { package: "com.acme.x" } } },
+  });
+  const r = meta(dir);
+  assert.ok(has(r, "HIGH", "targetSdk 35 is below the required 36"), JSON.stringify(r.issues, null, 2));
+});
+
+const expoApp = (extra = {}) => ({ expo: { name: "X", version: "1.0.0", ios: { bundleIdentifier: "com.acme.x", config: { usesNonExemptEncryption: false } }, android: { package: "com.acme.x" }, ...extra } });
+const targetTitle = (r) => (r.issues.find((i) => /targetSdk/.test(i.title)) || {}).title || "";
+
+for (const [expo, target] of [["~52.0.11", 34], ["51.0.0", 34], ["50.0.0", 34]]) {
+  test(`Expo ${expo} infers target SDK ${target}`, () => {
+    const dir = makeProject(`expo-${expo}-target`, { "package.json": { name: "x", dependencies: { expo } }, "app.json": expoApp() });
+    assert.equal(targetTitle(meta(dir)), `Android targetSdk ${target} is below the required 36`);
+  });
+}
+
+test("non-numeric Expo range → INFO, not a crash or a guess", () => {
+  const dir = makeProject("expo-latest", { "package.json": { name: "x", dependencies: { expo: "latest" } }, "app.json": expoApp() });
+  const r = meta(dir);
+  assert.equal(targetTitle(r), "");
+  assert.ok(has(r, "INFO", "Could not determine Android target SDK"), JSON.stringify(r.issues, null, 2));
+});
+
+test("android/gradle.properties targetSdkVersion=36 overrides Expo 53 inference", () => {
+  const dir = makeProject("expo53-gradleprops", {
+    "package.json": { name: "x", dependencies: { expo: "53.0.0" } },
+    "app.json": expoApp(),
+    "android/app/build.gradle": "android {\n  defaultConfig {\n    targetSdkVersion rootProject.ext.targetSdkVersion\n  }\n}",
+    "android/gradle.properties": "org.gradle.jvmargs=-Xmx2048m\nandroid.targetSdkVersion=36\n",
+  });
+  const r = meta(dir);
+  assert.equal(targetTitle(r), "", JSON.stringify(r.issues, null, 2));
+  assert.ok(r.passed.some((p) => /target SDK 36 .*gradle\.properties/.test(p)));
+});
+
+test("commented-out targetSdkVersion in build.gradle is ignored", () => {
+  const dir = makeProject("gradle-comment", {
+    "package.json": { name: "x", dependencies: { "react-native": "0.81.0" } },
+    "android/app/build.gradle": "android {\n  defaultConfig {\n    // targetSdkVersion 33\n    /* targetSdkVersion 30 */\n    targetSdkVersion 36\n  }\n}",
+  });
+  const r = meta(dir);
+  assert.equal(targetTitle(r), "", JSON.stringify(r.issues, null, 2));
+});
+
+test("bare RN 0.79 with rootProject.ext gradle → HIGH inferred 35", () => {
+  const dir = makeProject("bare-rn79", {
+    "package.json": { name: "x", dependencies: { "react-native": "0.79.2" } },
+    "android/app/build.gradle": "android {\n  defaultConfig {\n    targetSdkVersion rootProject.ext.targetSdkVersion\n  }\n}",
+  });
+  const r = meta(dir);
+  assert.ok(has(r, "HIGH", "targetSdk 35 is below the required 36"), JSON.stringify(r.issues, null, 2));
+});
+
+test("non-integer expo-build-properties targetSdkVersion is not trusted", () => {
+  const dir = makeProject("plugin-latest", {
+    "package.json": { name: "x", dependencies: { expo: "53.0.0" } },
+    "app.json": expoApp({ plugins: [["expo-build-properties", { android: { targetSdkVersion: "latest" } }]] }),
+  });
+  const r = meta(dir);
+  assert.ok(has(r, "MEDIUM", "is not an integer"), JSON.stringify(r.issues, null, 2));
+  assert.ok(has(r, "HIGH", "targetSdk 35 is below the required 36"));
+  assert.ok(!r.passed.some((p) => /latest/.test(p)));
+});
+
+test("fix text names the lowest Expo SDK that meets the minimum", () => {
+  const dir = makeProject("expo53-fixtext", { "package.json": { name: "x", dependencies: { expo: "53.0.0" } }, "app.json": expoApp() });
+  const issue = meta(dir).issues.find((i) => /targetSdk/.test(i.title));
+  assert.match(issue.fix, /Expo SDK 54\+/);
+});
+
+test("expo-build-properties targetSdkVersion 36 overrides Expo 53 inference", () => {
+  const dir = makeProject("expo53-plugin36", {
+    "package.json": { name: "x", dependencies: { expo: "53.0.0" } },
+    "app.json": { expo: { name: "X", version: "1.0.0", plugins: [["expo-build-properties", { android: { targetSdkVersion: 36 } }]], ios: { bundleIdentifier: "com.acme.x", config: { usesNonExemptEncryption: false } }, android: { package: "com.acme.x" } } },
+  });
+  const r = meta(dir);
+  assert.ok(!has(r, "HIGH", "target") && !has(r, "BLOCKER", "target"), JSON.stringify(r.issues, null, 2));
+  assert.ok(r.passed.some((p) => /target SDK 36/.test(p)));
 });
 
 test("long app name → HIGH; business bundle id → 3.2", () => {

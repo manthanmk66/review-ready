@@ -1,7 +1,7 @@
 # Apple App Store Review Guidelines — Plugin Knowledge Base
 
 **Source:** https://developer.apple.com/app-store/review/guidelines/
-**Captured:** 2026-05-19
+**Captured:** 2026-05-19 · **Revised:** 2026-10-12 (Feb 6 + Jun 8, 2026 guideline updates, Xcode 26 SDK gate, new age ratings)
 **Purpose:** Structured reference for a Claude Code plugin that scans iOS/macOS apps for App Store compliance issues.
 
 For each guideline:
@@ -71,15 +71,18 @@ For each guideline:
 **Fix:** Reframe to educational/non-exploitative.
 
 ## 1.2 User-Generated Content
-**Rule:** Apps with user-generated content or social networking services must include: (a) method for filtering objectionable material, (b) mechanism to report offensive content with timely response, (c) ability to block abusive users, (d) published contact information.
+**Rule:** Apps with user-generated content or social networking services must include: (a) method for filtering objectionable material, (b) mechanism to report offensive content with timely response, (c) ability to block abusive users, (d) published contact information. Apps "used primarily for pornographic content, Chatroulette-style experiences, **random or anonymous chat**, objectification of real people (e.g. "hot-or-not" voting), making physical threats, or bullying do not belong on the App Store and may be removed without notice" (random/anonymous chat added Feb 6, 2026).
+**Developer responsibility (added Jun 8, 2026):** "It is your responsibility to remove content that violates this guideline, your terms of service, or your community standards." If Apple finds such content it asks for removal plus a compliance plan; the app may be pulled until improvements are shown, and egregious or repeated behavior can remove the app and the developer account.
 **Auto-checkable:** Partial
 **What to check:**
 - Presence of "Report" UI action in source (`reportUser`, `reportContent`, `flag`).
 - Presence of "Block user" function.
 - Contact info in `App Store Connect` Support URL.
 - Profanity-filter or moderation SDK (Hive, Perspective, OpenAI Moderation).
-**Common rejection example:** Social app with comments but no Report/Block buttons.
-**Fix:** Add report, block, filter; publish contact info.
+- Random-match / stranger chat or anonymous handles with no persistent identity (`randomMatch`, `nextStranger`, `anonymous` chat rooms) → BLOCKER under 1.2 unless chat is incidental to a larger, moderated experience.
+- A moderation backend or admin path that can actually remove content (not just a report button that emails nobody).
+**Common rejection example:** Social app with comments but no Report/Block buttons; "talk to strangers" app rejected outright.
+**Fix:** Add report, block, filter; publish contact info; have a working takedown process with response times; drop anonymous random-match as the core feature.
 
 ## 1.2.1 Creator Content
 **Rule:** Creator apps featuring content from non-developer "creators" (video, articles, audio, casual games) must follow all Guidelines including 1.2 (moderation) and 3.1.1 (IAP for purchases). Must indicate which content requires additional purchase.
@@ -228,7 +231,8 @@ For each guideline:
 **Auto-checkable:** No
 
 ## 2.3.6 Age Rating
-**Rule:** Answer age rating questions honestly.
+**Rule:** Answer the age rating questions in App Store Connect honestly so the app aligns with parental controls. Since **Jan 31, 2026** the App Store uses the new rating tiers (**4+, 9+, 13+, 16+, 18+**) and new questions (in-app controls, capabilities such as UGC/messaging/AI chat, medical or wellness topics, violent themes). Apps that hadn't answered the new questionnaire get submission interruptions.
+**Age assurance (INFO):** US state App Store Accountability Acts (Texas in effect after the 5th Circuit stay, Utah and Louisiana phasing in) require apps to honor age signals from the store. Apple exposes these via the **Declared Age Range** API (iOS 26+); Google via **Play Age Signals**. Flag as INFO for apps with UGC, chat, dating, or 13+/16+/18+ content.
 **Auto-checkable:** Partial
 **What to check:** Declared age rating vs content scan (violence/sex/gambling references); media warnings.
 **Fix:** Update age rating answers.
@@ -337,6 +341,14 @@ For each guideline:
 - HomeKit not used for non-home purposes; HealthKit integrated with Health app.
 **Common rejection example:** Calling private `_UIApplicationSnapshot` or `setBackgroundStyle:` private selector.
 **Fix:** Replace with public APIs.
+
+### 2.5.1-SDK Upload Minimums (App Store Connect, not a review guideline)
+**Rule:** Since **Apr 28, 2026**, uploads must be built with **Xcode 26+** against the **iOS / iPadOS 26 SDK** (tvOS, visionOS, watchOS 26 likewise). Since **Sep 9, 2026**, iOS/iPadOS uploads must have a deployment target of **iOS 13 or later**. Older builds fail binary validation at upload, before review.
+**Auto-checkable:** Partial
+**What to check:**
+- Expo: SDK 54+ builds on an Xcode 26 EAS image by default. SDK ≤ 53 needs `"image"` in `eas.json > build.<profile>.ios` set to an Xcode 26 image (or `"latest"`), and the native deps must compile on Xcode 26.
+- Bare / native: CI `xcode-version`, `DEVELOPER_DIR`, `xcodes`, `macos-*` runner images, `.xcode-version` file; `IPHONEOS_DEPLOYMENT_TARGET` ≥ 13.0 (RN 0.76+ already requires 15.1).
+**Fix:** Upgrade to Expo SDK 54+ or pin an Xcode 26 build image; bump CI Xcode.
 
 ### 2.5.2 Self-Contained Bundle / No Code Download
 **Rule:** Apps must be self-contained, not read/write outside container, not download/install/execute code that changes features (except educational coding apps with viewable source).
@@ -664,10 +676,15 @@ For each guideline:
 **What to check:** Network code reaches only LAN; no cloud-streaming endpoints.
 
 ## 4.3 Spam
-**Rule (a):** Don't create multiple Bundle IDs of same app.
-**Rule (b):** Avoid piling onto saturated categories (fart/burp/flashlight/fortune-telling/dating/drinking-games/Kama-Sutra) unless unique high-quality experience.
+**Rule (a):** Don't create multiple Bundle IDs of the same app (e.g. a separate map app per city). If the app has variants for locations, sports teams, universities, etc., ship one app and provide variants via in-app purchase.
+**Rule (b) (rewritten Jun 8, 2026):** Don't submit apps that are indistinguishable from what's already widely available. "Certain kinds of apps, such as **dating, flashlight, sound effects, wallpaper, simple timers, and fortune telling**, are well established on the App Store and we will not accept new submissions unless they offer a meaningfully different or improved experience. We may remove these apps from the App Store going forward if they are not updated, improved, or do not attract customers." Drinking games, Kama Sutra, fart and burp apps are called low-effort; "Repeated submissions of this kind may lead to removal from the Apple Developer Program."
 **Auto-checkable:** Partial
-**What to check:** Developer's portfolio for duplicate bundles with minor variations.
+**What to check:**
+- Developer's portfolio for duplicate bundles with minor variations (white-label / per-client builds of the same codebase).
+- App name, description, or primary feature matching a named saturated category (dating, flashlight, sound effects / soundboard, wallpaper, timer, fortune telling / horoscope / tarot) → HIGH; ask what's meaningfully different and put it in App Review Notes and the first screenshot.
+- Existing live apps in those categories with no update in a long time → INFO: risk of removal under the new "not updated / do not attract customers" clause.
+**Common rejection example:** Template-built wallpaper or soundboard app; city-specific clones of one app.
+**Fix:** Merge variants into one app; for saturated categories, ship a clear differentiator and explain it in Review Notes; keep live apps updated.
 
 ## 4.4 Extensions
 **Rule:** Extensions must comply with App Extension Programming Guide / Safari extensions docs. Should include functionality (help, settings). Marketing must accurately disclose extensions. Extensions may not include marketing/ads/IAP.
@@ -722,7 +739,8 @@ For each guideline:
 - No analytics export of MusicKit data.
 
 ### 4.5.3 No Spam via Apple Services
-**Rule:** No spam, phishing, unsolicited messages via Game Center, Push Notifications. No reverse lookup or harvesting of Player IDs/aliases.
+**Rule:** "Do not use Apple Services to spam, phish, or send unsolicited messages to customers, including Game Center, Push Notifications, **Live Activities**, etc." (Live Activities named Jun 8, 2026.) No reverse lookup or harvesting of Player IDs/aliases.
+**What to check:** `ActivityKit` / `expo-live-activity` / `react-native-live-activities` usage started for marketing or promos rather than a user-initiated, time-bound task (delivery, ride, score, timer). Push-to-start Live Activities sent without a matching user action.
 
 ### 4.5.4 Push Notifications
 **Rule:** Push must not be required for app to function. Must not send sensitive/confidential info. Not for promotions/marketing unless user opted in via in-app consent UI; must provide opt-out.
@@ -1410,12 +1428,17 @@ Abseil, AFNetworking, Alamofire, AppAuth, BoringSSL / openssl_grpc, Capacitor, C
 | Loot box no odds | 3.1.1 | Loot-box UI without probability disclosure |
 | Single-WebView app | 4.2 | Root VC is solely a `WKWebView` to external URL |
 | External link to non-IAP in restricted storefront | 3.1.1(a) | Outbound URL to payment page without entitlement |
+| Built with Xcode < 26 / iOS SDK < 26 | SDK minimums | EAS image / CI Xcode version; Expo SDK ≤ 53 without pinned Xcode 26 image |
+| Random / anonymous stranger chat | 1.2 | Random-match or anonymous chat as core feature |
+| Saturated category clone | 4.3(b) | Name/description matches dating, flashlight, soundboard, wallpaper, timer, fortune telling |
+| Live Activity used for promos | 4.5.3 | `ActivityKit` started outside a user-initiated task |
 
 ---
 
 # DOCUMENT METADATA
 
-- **Sources fetched:** 2026-05-19
+- **Sources fetched:** 2026-05-19; re-checked 2026-10-12 (1.2, 2.3.6, 4.3, 4.5.3 text; SDK minimums)
+- **Upcoming requirements:** https://developer.apple.com/news/upcoming-requirements/
 - **Primary:** https://developer.apple.com/app-store/review/guidelines/
 - **Privacy Manifest:** https://developer.apple.com/documentation/bundleresources/privacy-manifest-files
 - **Required Reason API:** https://developer.apple.com/documentation/bundleresources/privacy-manifest-files/describing-use-of-required-reason-api

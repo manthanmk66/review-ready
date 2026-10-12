@@ -295,32 +295,86 @@ function checkSignInWithApple(ctx, add, passed) {
 }
 
 // ── Check 7 — Android target SDK ────────────────────────────────────────────────
+const stripGradleComments = (src) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+
+function toSdkInt(v) {
+  const n = typeof v === "number" ? v : /^\s*\d+\s*$/.test(String(v)) ? parseInt(v, 10) : NaN;
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+function readGradleTarget(root) {
+  for (const name of ["build.gradle", "build.gradle.kts"]) {
+    const src = readText(path.join(root, "android", "app", name));
+    if (!src) continue;
+    const m = stripGradleComments(src).match(/\btargetSdk(?:Version)?\s*(?:=\s*)?\(?\s*(\d+)/);
+    if (m) return { value: parseInt(m[1], 10), source: `android/app/${name}` };
+  }
+  const props = readText(path.join(root, "android", "gradle.properties"));
+  if (props) {
+    const m = props.match(/^\s*android\.targetSdkVersion\s*=\s*(\d+)\s*$/m);
+    if (m) return { value: parseInt(m[1], 10), source: "android/gradle.properties" };
+  }
+  const rootGradle = readText(path.join(root, "android", "build.gradle"));
+  if (rootGradle) {
+    const src = stripGradleComments(rootGradle);
+    const m =
+      src.match(/\btargetSdkVersion\s*=\s*(\d+)/) ||
+      src.match(/findProperty\(\s*['"]android\.targetSdkVersion['"]\s*\)\s*\?:\s*['"](\d+)['"]/);
+    if (m) return { value: parseInt(m[1], 10), source: "android/build.gradle" };
+  }
+  return null;
+}
+
 function checkTargetSdk(ctx, add, passed) {
   if (!(ctx.detected.isExpo || ctx.detected.hasAndroid)) return;
 
-  // 1) Literal in build.gradle wins.
-  const gradle = readText(path.join(ctx.detected.root, "android", "app", "build.gradle"));
-  let literal = null;
-  if (gradle) {
-    const m = gradle.match(/targetSdkVersion\s+(\d+)/) || gradle.match(/targetSdk(?:Version)?\s*=?\s*(\d+)/);
-    if (m) literal = parseInt(m[1], 10);
-  }
-  // 2) expo-build-properties plugin in app.json.
+  // Precedence mirrors what the build actually uses: native gradle files, then
+  // expo-build-properties (applied at prebuild), then the SDK's default.
+  const gradle = readGradleTarget(ctx.detected.root);
+
   let pluginTarget = null;
+  let pluginInvalid = null;
   const cfg = ctx.appConfig.config;
   if (cfg && Array.isArray(cfg.plugins)) {
     for (const p of cfg.plugins) {
-      if (Array.isArray(p) && p[0] === "expo-build-properties" && p[1] && p[1].android && p[1].android.targetSdkVersion) {
-        pluginTarget = p[1].android.targetSdkVersion;
+      if (Array.isArray(p) && p[0] === "expo-build-properties" && p[1] && p[1].android && p[1].android.targetSdkVersion != null) {
+        const v = p[1].android.targetSdkVersion;
+        pluginTarget = toSdkInt(v);
+        pluginInvalid = pluginTarget == null ? v : null;
       }
     }
   }
-  // 3) Infer from Expo SDK.
-  const expoMajor = ctx.detected.expoSdk ? parseInt(ctx.detected.expoSdk, 10) : null;
-  const inferred = expoMajor ? M.expoToTargetSdk(expoMajor) : null;
 
-  const effective = literal || pluginTarget || inferred;
-  const sourceName = literal ? "android/app/build.gradle" : pluginTarget ? "expo-build-properties" : "Expo SDK " + ctx.detected.expoSdk;
+  let inferred = null;
+  let inferredFrom = null;
+  const expoMajor = ctx.detected.expoSdk ? parseInt(ctx.detected.expoSdk, 10) : NaN;
+  if (Number.isInteger(expoMajor)) {
+    inferred = M.expoToTargetSdk(expoMajor);
+    inferredFrom = "Expo SDK " + ctx.detected.expoSdk;
+  } else if (ctx.detected.rnVersion) {
+    const [maj, min] = String(ctx.detected.rnVersion).split(".").map((n) => parseInt(n, 10));
+    if (maj === 0 && Number.isInteger(min)) {
+      inferred = M.rnToTargetSdk(min);
+      inferredFrom = "React Native " + ctx.detected.rnVersion;
+    }
+  }
+
+  if (pluginInvalid != null && !gradle) {
+    add({
+      severity: "MEDIUM",
+      store: "google",
+      guideline: "Google Play — Target API level",
+      file: appFile(ctx),
+      title: `expo-build-properties targetSdkVersion ${JSON.stringify(pluginInvalid)} is not an integer`,
+      description: `android.targetSdkVersion must be a plain API level such as ${M.MIN_TARGET_SDK}; this value can break prebuild or be ignored.`,
+      fix: `Set android.targetSdkVersion: ${M.MIN_TARGET_SDK} in the expo-build-properties plugin.`,
+      auto_fixable: false,
+    });
+  }
+
+  const effective = gradle ? gradle.value : pluginTarget != null ? pluginTarget : inferred;
+  const sourceName = gradle ? gradle.source : pluginTarget != null ? "expo-build-properties" : inferredFrom;
+  const fileRef = gradle ? ctx.rel(gradle.source) : appFile(ctx);
 
   if (effective == null) {
     add({
@@ -328,24 +382,29 @@ function checkTargetSdk(ctx, add, passed) {
       store: "google",
       guideline: "Google Play — Target API level",
       title: "Could not determine Android target SDK",
-      description: "Couldn't read targetSdkVersion from build.gradle, expo-build-properties or the Expo SDK. Play requires API 35+ for new/updated apps.",
+      description: `Couldn't read targetSdkVersion from the Android gradle files, expo-build-properties, or the Expo / React Native version. Play requires API ${M.MIN_TARGET_SDK}+ for new/updated apps.`,
       auto_fixable: false,
     });
     return;
   }
 
   if (effective < M.MIN_TARGET_SDK) {
-    const determined = !!(literal || pluginTarget);
+    const determined = !!gradle || pluginTarget != null;
+    const minExpo = M.minExpoSdkForTarget(M.MIN_TARGET_SDK);
     add({
       severity: determined ? "BLOCKER" : "HIGH",
       store: "google",
-      guideline: "Google Play — Target API level (Aug 2025)",
-      file: literal ? ctx.rel("android/app/build.gradle") : appFile(ctx),
+      guideline: "Google Play — Target API level (Aug 2026)",
+      file: fileRef,
       title: `Android targetSdk ${effective} is below the required ${M.MIN_TARGET_SDK}`,
-      description: `Target API ${effective} (from ${sourceName}) is below Google Play's API ${M.MIN_TARGET_SDK} requirement; the Console rejects the upload.`,
-      fix: literal
-        ? `Bump targetSdkVersion to ${M.MIN_TARGET_SDK} in android/app/build.gradle.`
-        : `Upgrade Expo SDK (52+ targets API 35) or set targetSdkVersion: ${M.MIN_TARGET_SDK} via expo-build-properties.`,
+      description:
+        `Target API ${effective} (from ${sourceName}) is below Google Play's API ${M.MIN_TARGET_SDK} requirement for new apps and updates; the Console rejects the upload. ` +
+        "Exceptions: apps granted an extension (to Nov 1, 2026), Wear OS / Automotive (API 35) and TV / XR (API 34).",
+      fix: gradle
+        ? `Set targetSdkVersion to ${M.MIN_TARGET_SDK} in ${gradle.source}.`
+        : ctx.detected.isExpo
+          ? `Upgrade to Expo SDK ${minExpo}+ (targets API ${M.MIN_TARGET_SDK}) or set targetSdkVersion: ${M.MIN_TARGET_SDK} via expo-build-properties.`
+          : `Upgrade React Native or set targetSdkVersion ${M.MIN_TARGET_SDK} in android/app/build.gradle.`,
       auto_fixable: false,
     });
   } else {

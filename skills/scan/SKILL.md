@@ -45,7 +45,7 @@ Spawn these subagents simultaneously using the Agent tool. Each gets a focused s
 | `privacy-auditor` | Privacy compliance | ATT, PrivacyInfo.xcprivacy, permission usage strings, Data Safety form alignment, privacy policy URL, account deletion |
 | `iap-business-auditor` | Monetization | Apple IAP 3.1.1 enforcement, Stripe-for-digital-goods detection, subscription disclosure, external payment links, Play Billing |
 | `permissions-auditor` | Permissions & APIs | iOS permission strings present for every used capability, Android restricted permissions (SMS, MANAGE_EXTERNAL_STORAGE, etc.), **`READ_MEDIA_IMAGES`/`READ_MEDIA_VIDEO` vs. one-off Photo Picker usage → BLOCKER when over-declared (§8.4)**, foreground service types, sensitive APIs |
-| `metadata-auditor` | Store listing & app config | Bundle IDs, version numbers, app name length, icon spec, encryption export compliance, Sign in with Apple, target SDK, adaptive icon |
+| `metadata-auditor` | Store listing & app config | Bundle IDs, version numbers, app name length, icon spec, encryption export compliance, Sign in with Apple, Android target SDK 36, iOS Xcode 26 build SDK, adaptive icon, Apple 4.3(b) saturated categories |
 | `crash-risk-auditor` | Stability & quality | Force unwraps, unhandled promises, missing error boundaries, webview-only apps, minimum functionality, common crash patterns |
 
 For each subagent, pass:
@@ -128,7 +128,7 @@ Output this exact structure:
 - ...
 
 ## ✅ Passed (N)
-`✓ PrivacyInfo.xcprivacy present` &nbsp; `✓ Target SDK 35` &nbsp; …
+`✓ PrivacyInfo.xcprivacy present` &nbsp; `✓ Target SDK 36` &nbsp; …
 ```
 
 Build the `████░░░░` bar from the share of BLOCKER+HIGH issues out of all issues
@@ -216,6 +216,6 @@ All compliance rules are documented in the plugin's `rules/` directory. Subagent
 
 **Respect the stack.** Don't tell an Expo dev to edit `Info.plist` directly — tell them to update `app.json > ios.infoPlist`. Don't tell a native iOS dev about `app.json`.
 
-**Currency.** All guidelines were captured as of May 2026. Note upcoming deadlines (Play 16KB May 1 2026, Apple privacy manifest enforcement, etc.) as INFO items.
+**Currency.** Guidelines were last revised October 2026 (Apple Jun 8, 2026 guidelines; Play Jul 15, 2026 policy announcement; Play API 36 from Aug 31, 2026; Xcode 26 upload gate from Apr 28, 2026). Things already in force (16 KB pages, API 36, Xcode 26) are BLOCKER/HIGH findings, not INFO. Use INFO for pending items: the Nov 1, 2026 end of Play target-API extensions, US state age-assurance laws (Declared Age Range / Play Age Signals), and Android developer verification rollout outside BR/ID/SG/TH.
 
 **Test on real apps first.** This plugin was developed and validated against real Expo / React Native projects. Subagents should default to a conservative interpretation when ambiguous.
